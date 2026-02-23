@@ -118,7 +118,7 @@ namespace SKAIChips_Verification_Tool.RegisterControl
             return transferred;
         }
 
-        public bool 
+        public bool
             Master(int sckRateKHz, int mode)
         {
             ThrowIfDisposed();

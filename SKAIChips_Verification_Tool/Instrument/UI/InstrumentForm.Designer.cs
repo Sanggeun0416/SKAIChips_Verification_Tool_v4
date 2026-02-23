@@ -40,9 +40,9 @@ namespace SKAIChips_Verification_Tool.Instrument
             base.Dispose(disposing);
         }
 
-        
 
-        
+
+
         private void InitializeComponent()
         {
             tableLayoutPanel_Instrument = new TableLayoutPanel();
@@ -70,9 +70,9 @@ namespace SKAIChips_Verification_Tool.Instrument
             ((System.ComponentModel.ISupportInitialize)dataGridView_InsList).BeginInit();
             groupBox_InsCommand.SuspendLayout();
             SuspendLayout();
-            
-            
-            
+            // 
+            // tableLayoutPanel_Instrument
+            // 
             tableLayoutPanel_Instrument.ColumnCount = 1;
             tableLayoutPanel_Instrument.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 100F));
             tableLayoutPanel_Instrument.Controls.Add(groupBox_InsSetting, 0, 0);
@@ -85,9 +85,9 @@ namespace SKAIChips_Verification_Tool.Instrument
             tableLayoutPanel_Instrument.RowStyles.Add(new RowStyle(SizeType.Percent, 100F));
             tableLayoutPanel_Instrument.Size = new Size(828, 499);
             tableLayoutPanel_Instrument.TabIndex = 0;
-            
-            
-            
+            // 
+            // groupBox_InsSetting
+            // 
             groupBox_InsSetting.Controls.Add(button_InsDown);
             groupBox_InsSetting.Controls.Add(button_InsUp);
             groupBox_InsSetting.Controls.Add(dataGridView_InsList);
@@ -101,9 +101,9 @@ namespace SKAIChips_Verification_Tool.Instrument
             groupBox_InsSetting.TabIndex = 0;
             groupBox_InsSetting.TabStop = false;
             groupBox_InsSetting.Text = "Instrument Setting";
-            
-            
-            
+            // 
+            // button_InsDown
+            // 
             button_InsDown.Anchor = AnchorStyles.Top | AnchorStyles.Right;
             button_InsDown.Location = new Point(746, 20);
             button_InsDown.Name = "button_InsDown";
@@ -111,9 +111,9 @@ namespace SKAIChips_Verification_Tool.Instrument
             button_InsDown.TabIndex = 5;
             button_InsDown.Text = "Down";
             button_InsDown.UseVisualStyleBackColor = true;
-            
-            
-            
+            // 
+            // button_InsUp
+            // 
             button_InsUp.Anchor = AnchorStyles.Top | AnchorStyles.Right;
             button_InsUp.Location = new Point(670, 20);
             button_InsUp.Name = "button_InsUp";
@@ -121,66 +121,59 @@ namespace SKAIChips_Verification_Tool.Instrument
             button_InsUp.TabIndex = 4;
             button_InsUp.Text = "Up";
             button_InsUp.UseVisualStyleBackColor = true;
-            
-            
-            
+            // 
+            // dataGridView_InsList
+            // 
             dataGridView_InsList.AllowUserToAddRows = false;
             dataGridView_InsList.AllowUserToDeleteRows = false;
             dataGridView_InsList.AllowUserToResizeColumns = false;
             dataGridView_InsList.AllowUserToResizeRows = false;
             dataGridView_InsList.ColumnHeadersHeightSizeMode = DataGridViewColumnHeadersHeightSizeMode.AutoSize;
-            dataGridView_InsList.Columns.AddRange(new DataGridViewColumn[]
-            {
-                Column_InsType,
-                Column_InsEnabled,
-                Column_Address,
-                Column_InsTest,
-                Column_InsName
-            });
+            dataGridView_InsList.Columns.AddRange(new DataGridViewColumn[] { Column_InsType, Column_InsEnabled, Column_Address, Column_InsTest, Column_InsName });
             dataGridView_InsList.Location = new Point(6, 49);
             dataGridView_InsList.Name = "dataGridView_InsList";
             dataGridView_InsList.RowHeadersVisible = false;
             dataGridView_InsList.RowTemplate.Height = 20;
             dataGridView_InsList.Size = new Size(810, 180);
             dataGridView_InsList.TabIndex = 3;
-            
-            
-            
+            // 
+            // Column_InsType
+            // 
             Column_InsType.DataPropertyName = "Type";
             Column_InsType.HeaderText = "Type";
             Column_InsType.MinimumWidth = 10;
             Column_InsType.Name = "Column_InsType";
             Column_InsType.SortMode = DataGridViewColumnSortMode.NotSortable;
             Column_InsType.Width = 125;
-            
-            
-            
+            // 
+            // Column_InsEnabled
+            // 
             Column_InsEnabled.DataPropertyName = "Enabled";
             Column_InsEnabled.HeaderText = "En";
             Column_InsEnabled.MinimumWidth = 10;
             Column_InsEnabled.Name = "Column_InsEnabled";
             Column_InsEnabled.Width = 30;
-            
-            
-            
+            // 
+            // Column_Address
+            // 
             Column_Address.DataPropertyName = "VisaAddress";
             Column_Address.HeaderText = "VISA Address";
             Column_Address.MinimumWidth = 125;
             Column_Address.Name = "Column_Address";
             Column_Address.SortMode = DataGridViewColumnSortMode.NotSortable;
             Column_Address.Width = 250;
-            
-            
-            
+            // 
+            // Column_InsTest
+            // 
             Column_InsTest.HeaderText = "Test";
             Column_InsTest.MinimumWidth = 10;
             Column_InsTest.Name = "Column_InsTest";
             Column_InsTest.Text = "Gets";
             Column_InsTest.UseColumnTextForButtonValue = true;
             Column_InsTest.Width = 50;
-            
-            
-            
+            // 
+            // Column_InsName
+            // 
             Column_InsName.DataPropertyName = "Name";
             Column_InsName.HeaderText = "Name";
             Column_InsName.MinimumWidth = 10;
@@ -188,35 +181,35 @@ namespace SKAIChips_Verification_Tool.Instrument
             Column_InsName.ReadOnly = true;
             Column_InsName.SortMode = DataGridViewColumnSortMode.NotSortable;
             Column_InsName.Width = 325;
-            
-            
-            
+            // 
+            // button_RemoveInstrument
+            // 
             button_RemoveInstrument.Location = new Point(386, 20);
             button_RemoveInstrument.Name = "button_RemoveInstrument";
             button_RemoveInstrument.Size = new Size(100, 25);
             button_RemoveInstrument.TabIndex = 2;
             button_RemoveInstrument.Text = "Remove";
             button_RemoveInstrument.UseVisualStyleBackColor = true;
-            
-            
-            
+            // 
+            // button_AddInstrument
+            // 
             button_AddInstrument.Location = new Point(280, 20);
             button_AddInstrument.Name = "button_AddInstrument";
             button_AddInstrument.Size = new Size(100, 25);
             button_AddInstrument.TabIndex = 1;
             button_AddInstrument.Text = "Add";
             button_AddInstrument.UseVisualStyleBackColor = true;
-            
-            
-            
+            // 
+            // comboBox_InsTypes
+            // 
             comboBox_InsTypes.FormattingEnabled = true;
             comboBox_InsTypes.Location = new Point(6, 20);
             comboBox_InsTypes.Name = "comboBox_InsTypes";
             comboBox_InsTypes.Size = new Size(250, 23);
             comboBox_InsTypes.TabIndex = 0;
-            
-            
-            
+            // 
+            // groupBox_InsCommand
+            // 
             groupBox_InsCommand.Controls.Add(button_ClearInsLog);
             groupBox_InsCommand.Controls.Add(button_InsScreenCapture);
             groupBox_InsCommand.Controls.Add(richTextBox_InsCommandLog);
@@ -230,9 +223,9 @@ namespace SKAIChips_Verification_Tool.Instrument
             groupBox_InsCommand.TabIndex = 1;
             groupBox_InsCommand.TabStop = false;
             groupBox_InsCommand.Text = "Instrument Command";
-            
-            
-            
+            // 
+            // button_ClearInsLog
+            // 
             button_ClearInsLog.Anchor = AnchorStyles.Bottom | AnchorStyles.Right;
             button_ClearInsLog.Location = new Point(696, 217);
             button_ClearInsLog.Name = "button_ClearInsLog";
@@ -240,9 +233,9 @@ namespace SKAIChips_Verification_Tool.Instrument
             button_ClearInsLog.TabIndex = 5;
             button_ClearInsLog.Text = "Clear Log";
             button_ClearInsLog.UseVisualStyleBackColor = true;
-            
-            
-            
+            // 
+            // button_InsScreenCapture
+            // 
             button_InsScreenCapture.Anchor = AnchorStyles.Top | AnchorStyles.Right;
             button_InsScreenCapture.Location = new Point(696, 51);
             button_InsScreenCapture.Name = "button_InsScreenCapture";
@@ -250,48 +243,49 @@ namespace SKAIChips_Verification_Tool.Instrument
             button_InsScreenCapture.TabIndex = 4;
             button_InsScreenCapture.Text = "Capture";
             button_InsScreenCapture.UseVisualStyleBackColor = true;
-            
-            
-            
+            // 
+            // richTextBox_InsCommandLog
+            // 
             richTextBox_InsCommandLog.Location = new Point(6, 51);
             richTextBox_InsCommandLog.Name = "richTextBox_InsCommandLog";
             richTextBox_InsCommandLog.Size = new Size(684, 196);
             richTextBox_InsCommandLog.TabIndex = 3;
             richTextBox_InsCommandLog.Text = "";
-            
-            
-            
+            // 
+            // button_SendInsCommand
+            // 
             button_SendInsCommand.Location = new Point(165, 20);
             button_SendInsCommand.Name = "button_SendInsCommand";
             button_SendInsCommand.Size = new Size(140, 25);
             button_SendInsCommand.TabIndex = 2;
             button_SendInsCommand.Text = "Send Command";
             button_SendInsCommand.UseVisualStyleBackColor = true;
-            
-            
-            
+            // 
+            // textBox_InsCommand
+            // 
             textBox_InsCommand.Anchor = AnchorStyles.Top | AnchorStyles.Left | AnchorStyles.Right;
             textBox_InsCommand.Location = new Point(311, 20);
             textBox_InsCommand.Name = "textBox_InsCommand";
             textBox_InsCommand.Size = new Size(505, 23);
             textBox_InsCommand.TabIndex = 1;
-            
-            
-            
+            // 
+            // textBox_InsType
+            // 
             textBox_InsType.Location = new Point(9, 20);
             textBox_InsType.Name = "textBox_InsType";
             textBox_InsType.ReadOnly = true;
             textBox_InsType.Size = new Size(150, 23);
             textBox_InsType.TabIndex = 0;
-            
-            
-            
+            // 
+            // InstrumentForm
+            // 
             AutoScaleDimensions = new SizeF(7F, 15F);
             AutoScaleMode = AutoScaleMode.Font;
             ClientSize = new Size(828, 499);
             Controls.Add(tableLayoutPanel_Instrument);
             FormBorderStyle = FormBorderStyle.Fixed3D;
             Name = "InstrumentForm";
+            ShowIcon = false;
             Text = "Instrument Setup";
             tableLayoutPanel_Instrument.ResumeLayout(false);
             groupBox_InsSetting.ResumeLayout(false);
@@ -301,6 +295,6 @@ namespace SKAIChips_Verification_Tool.Instrument
             ResumeLayout(false);
         }
 
-        
+
     }
 }

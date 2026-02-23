@@ -28,291 +28,274 @@
         /// </summary>
         private void InitializeComponent()
         {
-            this.grpConnection = new System.Windows.Forms.GroupBox();
-            this.btnConnect = new System.Windows.Forms.Button();
-            this.numDevIndex = new System.Windows.Forms.NumericUpDown();
-            this.lblDevIdx = new System.Windows.Forms.Label();
-            this.cmbProtocol = new System.Windows.Forms.ComboBox();
-            this.lblProtocol = new System.Windows.Forms.Label();
-            this.grpSettings = new System.Windows.Forms.GroupBox();
-            this.cmbSpiMode = new System.Windows.Forms.ComboBox();
-            this.lblSpiMode = new System.Windows.Forms.Label();
-            this.txtSlaveAddr = new System.Windows.Forms.TextBox();
-            this.lblSlaveAddr = new System.Windows.Forms.Label();
-            this.txtSpeed = new System.Windows.Forms.TextBox();
-            this.lblSpeed = new System.Windows.Forms.Label();
-            this.grpDataIO = new System.Windows.Forms.GroupBox();
-            this.btnRead = new System.Windows.Forms.Button();
-            this.btnWrite = new System.Windows.Forms.Button();
-            this.numReadLen = new System.Windows.Forms.NumericUpDown();
-            this.lblReadLen = new System.Windows.Forms.Label();
-            this.txtWriteData = new System.Windows.Forms.TextBox();
-            this.lblWriteData = new System.Windows.Forms.Label();
-            this.grpLog = new System.Windows.Forms.GroupBox();
-            this.rtbLog = new System.Windows.Forms.RichTextBox();
-            this.grpConnection.SuspendLayout();
-            ((System.ComponentModel.ISupportInitialize)(this.numDevIndex)).BeginInit();
-            this.grpSettings.SuspendLayout();
-            this.grpDataIO.SuspendLayout();
-            ((System.ComponentModel.ISupportInitialize)(this.numReadLen)).BeginInit();
-            this.grpLog.SuspendLayout();
-            this.SuspendLayout();
+            grpConnection = new GroupBox();
+            btnConnect = new Button();
+            numDevIndex = new NumericUpDown();
+            lblDevIdx = new Label();
+            cmbProtocol = new ComboBox();
+            lblProtocol = new Label();
+            grpSettings = new GroupBox();
+            cmbSpiMode = new ComboBox();
+            lblSpiMode = new Label();
+            txtSlaveAddr = new TextBox();
+            lblSlaveAddr = new Label();
+            txtSpeed = new TextBox();
+            lblSpeed = new Label();
+            grpDataIO = new GroupBox();
+            btnRead = new Button();
+            btnWrite = new Button();
+            numReadLen = new NumericUpDown();
+            lblReadLen = new Label();
+            txtWriteData = new TextBox();
+            lblWriteData = new Label();
+            grpLog = new GroupBox();
+            rtbLog = new RichTextBox();
+            grpConnection.SuspendLayout();
+            ((System.ComponentModel.ISupportInitialize)numDevIndex).BeginInit();
+            grpSettings.SuspendLayout();
+            grpDataIO.SuspendLayout();
+            ((System.ComponentModel.ISupportInitialize)numReadLen).BeginInit();
+            grpLog.SuspendLayout();
+            SuspendLayout();
             // 
             // grpConnection
             // 
-            this.grpConnection.Controls.Add(this.btnConnect);
-            this.grpConnection.Controls.Add(this.numDevIndex);
-            this.grpConnection.Controls.Add(this.lblDevIdx);
-            this.grpConnection.Controls.Add(this.cmbProtocol);
-            this.grpConnection.Controls.Add(this.lblProtocol);
-            this.grpConnection.Location = new System.Drawing.Point(12, 12);
-            this.grpConnection.Name = "grpConnection";
-            this.grpConnection.Size = new System.Drawing.Size(460, 70);
-            this.grpConnection.TabIndex = 0;
-            this.grpConnection.TabStop = false;
-            this.grpConnection.Text = "Connection";
+            grpConnection.Controls.Add(btnConnect);
+            grpConnection.Controls.Add(numDevIndex);
+            grpConnection.Controls.Add(lblDevIdx);
+            grpConnection.Controls.Add(cmbProtocol);
+            grpConnection.Controls.Add(lblProtocol);
+            grpConnection.Location = new Point(12, 12);
+            grpConnection.Name = "grpConnection";
+            grpConnection.Size = new Size(460, 70);
+            grpConnection.TabIndex = 0;
+            grpConnection.TabStop = false;
+            grpConnection.Text = "Connection";
             // 
             // btnConnect
             // 
-            this.btnConnect.Location = new System.Drawing.Point(350, 20);
-            this.btnConnect.Name = "btnConnect";
-            this.btnConnect.Size = new System.Drawing.Size(95, 30);
-            this.btnConnect.TabIndex = 4;
-            this.btnConnect.Text = "Connect";
-            this.btnConnect.UseVisualStyleBackColor = true;
-            this.btnConnect.Click += new System.EventHandler(this.btnConnect_Click);
+            btnConnect.Location = new Point(350, 20);
+            btnConnect.Name = "btnConnect";
+            btnConnect.Size = new Size(95, 30);
+            btnConnect.TabIndex = 4;
+            btnConnect.Text = "Connect";
+            btnConnect.UseVisualStyleBackColor = true;
+            btnConnect.Click += btnConnect_Click;
             // 
             // numDevIndex
             // 
-            this.numDevIndex.Location = new System.Drawing.Point(240, 25);
-            this.numDevIndex.Maximum = new decimal(new int[] {
-            10,
-            0,
-            0,
-            0});
-            this.numDevIndex.Name = "numDevIndex";
-            this.numDevIndex.Size = new System.Drawing.Size(50, 23);
-            this.numDevIndex.TabIndex = 3;
+            numDevIndex.Location = new Point(240, 25);
+            numDevIndex.Maximum = new decimal(new int[] { 10, 0, 0, 0 });
+            numDevIndex.Name = "numDevIndex";
+            numDevIndex.Size = new Size(50, 23);
+            numDevIndex.TabIndex = 3;
             // 
             // lblDevIdx
             // 
-            this.lblDevIdx.AutoSize = true;
-            this.lblDevIdx.Location = new System.Drawing.Point(180, 28);
-            this.lblDevIdx.Name = "lblDevIdx";
-            this.lblDevIdx.Size = new System.Drawing.Size(54, 15);
-            this.lblDevIdx.TabIndex = 2;
-            this.lblDevIdx.Text = "Dev Idx:";
+            lblDevIdx.AutoSize = true;
+            lblDevIdx.Location = new Point(180, 28);
+            lblDevIdx.Name = "lblDevIdx";
+            lblDevIdx.Size = new Size(51, 15);
+            lblDevIdx.TabIndex = 2;
+            lblDevIdx.Text = "Dev Idx:";
             // 
             // cmbProtocol
             // 
-            this.cmbProtocol.DropDownStyle = System.Windows.Forms.ComboBoxStyle.DropDownList;
-            this.cmbProtocol.FormattingEnabled = true;
-            this.cmbProtocol.Location = new System.Drawing.Point(75, 25);
-            this.cmbProtocol.Name = "cmbProtocol";
-            this.cmbProtocol.Size = new System.Drawing.Size(80, 23);
-            this.cmbProtocol.TabIndex = 1;
+            cmbProtocol.DropDownStyle = ComboBoxStyle.DropDownList;
+            cmbProtocol.FormattingEnabled = true;
+            cmbProtocol.Location = new Point(75, 25);
+            cmbProtocol.Name = "cmbProtocol";
+            cmbProtocol.Size = new Size(80, 23);
+            cmbProtocol.TabIndex = 1;
             // 
             // lblProtocol
             // 
-            this.lblProtocol.AutoSize = true;
-            this.lblProtocol.Location = new System.Drawing.Point(15, 28);
-            this.lblProtocol.Name = "lblProtocol";
-            this.lblProtocol.Size = new System.Drawing.Size(54, 15);
-            this.lblProtocol.TabIndex = 0;
-            this.lblProtocol.Text = "Protocol:";
+            lblProtocol.AutoSize = true;
+            lblProtocol.Location = new Point(15, 28);
+            lblProtocol.Name = "lblProtocol";
+            lblProtocol.Size = new Size(55, 15);
+            lblProtocol.TabIndex = 0;
+            lblProtocol.Text = "Protocol:";
             // 
             // grpSettings
             // 
-            this.grpSettings.Controls.Add(this.cmbSpiMode);
-            this.grpSettings.Controls.Add(this.lblSpiMode);
-            this.grpSettings.Controls.Add(this.txtSlaveAddr);
-            this.grpSettings.Controls.Add(this.lblSlaveAddr);
-            this.grpSettings.Controls.Add(this.txtSpeed);
-            this.grpSettings.Controls.Add(this.lblSpeed);
-            this.grpSettings.Location = new System.Drawing.Point(12, 88);
-            this.grpSettings.Name = "grpSettings";
-            this.grpSettings.Size = new System.Drawing.Size(460, 70);
-            this.grpSettings.TabIndex = 1;
-            this.grpSettings.TabStop = false;
-            this.grpSettings.Text = "Settings";
+            grpSettings.Controls.Add(cmbSpiMode);
+            grpSettings.Controls.Add(lblSpiMode);
+            grpSettings.Controls.Add(txtSlaveAddr);
+            grpSettings.Controls.Add(lblSlaveAddr);
+            grpSettings.Controls.Add(txtSpeed);
+            grpSettings.Controls.Add(lblSpeed);
+            grpSettings.Location = new Point(12, 88);
+            grpSettings.Name = "grpSettings";
+            grpSettings.Size = new Size(460, 70);
+            grpSettings.TabIndex = 1;
+            grpSettings.TabStop = false;
+            grpSettings.Text = "Settings";
             // 
             // cmbSpiMode
             // 
-            this.cmbSpiMode.DropDownStyle = System.Windows.Forms.ComboBoxStyle.DropDownList;
-            this.cmbSpiMode.FormattingEnabled = true;
-            this.cmbSpiMode.Location = new System.Drawing.Point(375, 25);
-            this.cmbSpiMode.Name = "cmbSpiMode";
-            this.cmbSpiMode.Size = new System.Drawing.Size(70, 23);
-            this.cmbSpiMode.TabIndex = 5;
+            cmbSpiMode.DropDownStyle = ComboBoxStyle.DropDownList;
+            cmbSpiMode.FormattingEnabled = true;
+            cmbSpiMode.Location = new Point(375, 25);
+            cmbSpiMode.Name = "cmbSpiMode";
+            cmbSpiMode.Size = new Size(70, 23);
+            cmbSpiMode.TabIndex = 5;
             // 
             // lblSpiMode
             // 
-            this.lblSpiMode.AutoSize = true;
-            this.lblSpiMode.Location = new System.Drawing.Point(305, 28);
-            this.lblSpiMode.Name = "lblSpiMode";
-            this.lblSpiMode.Size = new System.Drawing.Size(64, 15);
-            this.lblSpiMode.TabIndex = 4;
-            this.lblSpiMode.Text = "SPI Mode:";
+            lblSpiMode.AutoSize = true;
+            lblSpiMode.Location = new Point(305, 28);
+            lblSpiMode.Name = "lblSpiMode";
+            lblSpiMode.Size = new Size(62, 15);
+            lblSpiMode.TabIndex = 4;
+            lblSpiMode.Text = "SPI Mode:";
             // 
             // txtSlaveAddr
             // 
-            this.txtSlaveAddr.Location = new System.Drawing.Point(220, 25);
-            this.txtSlaveAddr.Name = "txtSlaveAddr";
-            this.txtSlaveAddr.Size = new System.Drawing.Size(70, 23);
-            this.txtSlaveAddr.TabIndex = 3;
+            txtSlaveAddr.Location = new Point(220, 25);
+            txtSlaveAddr.Name = "txtSlaveAddr";
+            txtSlaveAddr.Size = new Size(70, 23);
+            txtSlaveAddr.TabIndex = 3;
             // 
             // lblSlaveAddr
             // 
-            this.lblSlaveAddr.AutoSize = true;
-            this.lblSlaveAddr.Location = new System.Drawing.Point(150, 28);
-            this.lblSlaveAddr.Name = "lblSlaveAddr";
-            this.lblSlaveAddr.Size = new System.Drawing.Size(64, 15);
-            this.lblSlaveAddr.TabIndex = 2;
-            this.lblSlaveAddr.Text = "I2C Addr:";
+            lblSlaveAddr.AutoSize = true;
+            lblSlaveAddr.Location = new Point(150, 28);
+            lblSlaveAddr.Name = "lblSlaveAddr";
+            lblSlaveAddr.Size = new Size(58, 15);
+            lblSlaveAddr.TabIndex = 2;
+            lblSlaveAddr.Text = "I2C Addr:";
             // 
             // txtSpeed
             // 
-            this.txtSpeed.Location = new System.Drawing.Point(75, 25);
-            this.txtSpeed.Name = "txtSpeed";
-            this.txtSpeed.Size = new System.Drawing.Size(60, 23);
-            this.txtSpeed.TabIndex = 1;
+            txtSpeed.Location = new Point(75, 25);
+            txtSpeed.Name = "txtSpeed";
+            txtSpeed.Size = new Size(60, 23);
+            txtSpeed.TabIndex = 1;
             // 
             // lblSpeed
             // 
-            this.lblSpeed.AutoSize = true;
-            this.lblSpeed.Location = new System.Drawing.Point(15, 28);
-            this.lblSpeed.Name = "lblSpeed";
-            this.lblSpeed.Size = new System.Drawing.Size(54, 15);
-            this.lblSpeed.TabIndex = 0;
-            this.lblSpeed.Text = "Speed:";
+            lblSpeed.AutoSize = true;
+            lblSpeed.Location = new Point(15, 28);
+            lblSpeed.Name = "lblSpeed";
+            lblSpeed.Size = new Size(43, 15);
+            lblSpeed.TabIndex = 0;
+            lblSpeed.Text = "Speed:";
             // 
             // grpDataIO
             // 
-            this.grpDataIO.Controls.Add(this.btnRead);
-            this.grpDataIO.Controls.Add(this.btnWrite);
-            this.grpDataIO.Controls.Add(this.numReadLen);
-            this.grpDataIO.Controls.Add(this.lblReadLen);
-            this.grpDataIO.Controls.Add(this.txtWriteData);
-            this.grpDataIO.Controls.Add(this.lblWriteData);
-            this.grpDataIO.Location = new System.Drawing.Point(12, 164);
-            this.grpDataIO.Name = "grpDataIO";
-            this.grpDataIO.Size = new System.Drawing.Size(460, 100);
-            this.grpDataIO.TabIndex = 2;
-            this.grpDataIO.TabStop = false;
-            this.grpDataIO.Text = "Data I/O";
+            grpDataIO.Controls.Add(btnRead);
+            grpDataIO.Controls.Add(btnWrite);
+            grpDataIO.Controls.Add(numReadLen);
+            grpDataIO.Controls.Add(lblReadLen);
+            grpDataIO.Controls.Add(txtWriteData);
+            grpDataIO.Controls.Add(lblWriteData);
+            grpDataIO.Location = new Point(12, 164);
+            grpDataIO.Name = "grpDataIO";
+            grpDataIO.Size = new Size(460, 100);
+            grpDataIO.TabIndex = 2;
+            grpDataIO.TabStop = false;
+            grpDataIO.Text = "Data I/O";
             // 
             // btnRead
             // 
-            this.btnRead.Location = new System.Drawing.Point(370, 58);
-            this.btnRead.Name = "btnRead";
-            this.btnRead.Size = new System.Drawing.Size(75, 30);
-            this.btnRead.TabIndex = 5;
-            this.btnRead.Text = "Read";
-            this.btnRead.UseVisualStyleBackColor = true;
-            this.btnRead.Click += new System.EventHandler(this.btnRead_Click);
+            btnRead.Location = new Point(370, 58);
+            btnRead.Name = "btnRead";
+            btnRead.Size = new Size(75, 30);
+            btnRead.TabIndex = 5;
+            btnRead.Text = "Read";
+            btnRead.UseVisualStyleBackColor = true;
+            btnRead.Click += btnRead_Click;
             // 
             // btnWrite
             // 
-            this.btnWrite.Location = new System.Drawing.Point(370, 20);
-            this.btnWrite.Name = "btnWrite";
-            this.btnWrite.Size = new System.Drawing.Size(75, 30);
-            this.btnWrite.TabIndex = 4;
-            this.btnWrite.Text = "Write";
-            this.btnWrite.UseVisualStyleBackColor = true;
-            this.btnWrite.Click += new System.EventHandler(this.btnWrite_Click);
+            btnWrite.Location = new Point(370, 20);
+            btnWrite.Name = "btnWrite";
+            btnWrite.Size = new Size(75, 30);
+            btnWrite.TabIndex = 4;
+            btnWrite.Text = "Write";
+            btnWrite.UseVisualStyleBackColor = true;
+            btnWrite.Click += btnWrite_Click;
             // 
             // numReadLen
             // 
-            this.numReadLen.Location = new System.Drawing.Point(100, 63);
-            this.numReadLen.Maximum = new decimal(new int[] {
-            1024,
-            0,
-            0,
-            0});
-            this.numReadLen.Minimum = new decimal(new int[] {
-            1,
-            0,
-            0,
-            0});
-            this.numReadLen.Name = "numReadLen";
-            this.numReadLen.Size = new System.Drawing.Size(80, 23);
-            this.numReadLen.TabIndex = 3;
-            this.numReadLen.Value = new decimal(new int[] {
-            1,
-            0,
-            0,
-            0});
+            numReadLen.Location = new Point(100, 63);
+            numReadLen.Maximum = new decimal(new int[] { 1024, 0, 0, 0 });
+            numReadLen.Minimum = new decimal(new int[] { 1, 0, 0, 0 });
+            numReadLen.Name = "numReadLen";
+            numReadLen.Size = new Size(80, 23);
+            numReadLen.TabIndex = 3;
+            numReadLen.Value = new decimal(new int[] { 1, 0, 0, 0 });
             // 
             // lblReadLen
             // 
-            this.lblReadLen.AutoSize = true;
-            this.lblReadLen.Location = new System.Drawing.Point(15, 65);
-            this.lblReadLen.Name = "lblReadLen";
-            this.lblReadLen.Size = new System.Drawing.Size(75, 15);
-            this.lblReadLen.TabIndex = 2;
-            this.lblReadLen.Text = "Read Bytes:";
+            lblReadLen.AutoSize = true;
+            lblReadLen.Location = new Point(15, 65);
+            lblReadLen.Name = "lblReadLen";
+            lblReadLen.Size = new Size(68, 15);
+            lblReadLen.TabIndex = 2;
+            lblReadLen.Text = "Read Bytes:";
             // 
             // txtWriteData
             // 
-            this.txtWriteData.Location = new System.Drawing.Point(100, 25);
-            this.txtWriteData.Name = "txtWriteData";
-            this.txtWriteData.PlaceholderText = "e.g. 00 01 AB";
-            this.txtWriteData.Size = new System.Drawing.Size(260, 23);
-            this.txtWriteData.TabIndex = 1;
+            txtWriteData.Location = new Point(100, 25);
+            txtWriteData.Name = "txtWriteData";
+            txtWriteData.PlaceholderText = "e.g. 00 01 AB";
+            txtWriteData.Size = new Size(260, 23);
+            txtWriteData.TabIndex = 1;
             // 
             // lblWriteData
             // 
-            this.lblWriteData.AutoSize = true;
-            this.lblWriteData.Location = new System.Drawing.Point(15, 28);
-            this.lblWriteData.Name = "lblWriteData";
-            this.lblWriteData.Size = new System.Drawing.Size(75, 15);
-            this.lblWriteData.TabIndex = 0;
-            this.lblWriteData.Text = "Write Data:";
+            lblWriteData.AutoSize = true;
+            lblWriteData.Location = new Point(15, 28);
+            lblWriteData.Name = "lblWriteData";
+            lblWriteData.Size = new Size(67, 15);
+            lblWriteData.TabIndex = 0;
+            lblWriteData.Text = "Write Data:";
             // 
             // grpLog
             // 
-            this.grpLog.Anchor = ((System.Windows.Forms.AnchorStyles)((((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Bottom)
-            | System.Windows.Forms.AnchorStyles.Left)
-            | System.Windows.Forms.AnchorStyles.Right)));
-            this.grpLog.Controls.Add(this.rtbLog);
-            this.grpLog.Location = new System.Drawing.Point(12, 270);
-            this.grpLog.Name = "grpLog";
-            this.grpLog.Size = new System.Drawing.Size(460, 280);
-            this.grpLog.TabIndex = 3;
-            this.grpLog.TabStop = false;
-            this.grpLog.Text = "Log";
+            grpLog.Anchor = AnchorStyles.Top | AnchorStyles.Bottom | AnchorStyles.Left | AnchorStyles.Right;
+            grpLog.Controls.Add(rtbLog);
+            grpLog.Location = new Point(12, 270);
+            grpLog.Name = "grpLog";
+            grpLog.Size = new Size(460, 280);
+            grpLog.TabIndex = 3;
+            grpLog.TabStop = false;
+            grpLog.Text = "Log";
             // 
             // rtbLog
             // 
-            this.rtbLog.Dock = System.Windows.Forms.DockStyle.Fill;
-            this.rtbLog.Location = new System.Drawing.Point(3, 19);
-            this.rtbLog.Name = "rtbLog";
-            this.rtbLog.ReadOnly = true;
-            this.rtbLog.Size = new System.Drawing.Size(454, 258);
-            this.rtbLog.TabIndex = 0;
-            this.rtbLog.Text = "";
+            rtbLog.Dock = DockStyle.Fill;
+            rtbLog.Location = new Point(3, 19);
+            rtbLog.Name = "rtbLog";
+            rtbLog.ReadOnly = true;
+            rtbLog.Size = new Size(454, 258);
+            rtbLog.TabIndex = 0;
+            rtbLog.Text = "";
             // 
             // SimpleSerialForm
             // 
-            this.AutoScaleDimensions = new System.Drawing.SizeF(7F, 15F);
-            this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
-            this.ClientSize = new System.Drawing.Size(484, 561);
-            this.Controls.Add(this.grpLog);
-            this.Controls.Add(this.grpDataIO);
-            this.Controls.Add(this.grpSettings);
-            this.Controls.Add(this.grpConnection);
-            this.Name = "SimpleSerialForm";
-            this.Text = "Simple Serial Controller";
-            this.grpConnection.ResumeLayout(false);
-            this.grpConnection.PerformLayout();
-            ((System.ComponentModel.ISupportInitialize)(this.numDevIndex)).EndInit();
-            this.grpSettings.ResumeLayout(false);
-            this.grpSettings.PerformLayout();
-            this.grpDataIO.ResumeLayout(false);
-            this.grpDataIO.PerformLayout();
-            ((System.ComponentModel.ISupportInitialize)(this.numReadLen)).EndInit();
-            this.grpLog.ResumeLayout(false);
-            this.ResumeLayout(false);
+            AutoScaleDimensions = new SizeF(7F, 15F);
+            AutoScaleMode = AutoScaleMode.Font;
+            ClientSize = new Size(484, 561);
+            Controls.Add(grpLog);
+            Controls.Add(grpDataIO);
+            Controls.Add(grpSettings);
+            Controls.Add(grpConnection);
+            Name = "SimpleSerialForm";
+            ShowIcon = false;
+            Text = "Simple Serial Controller";
+            grpConnection.ResumeLayout(false);
+            grpConnection.PerformLayout();
+            ((System.ComponentModel.ISupportInitialize)numDevIndex).EndInit();
+            grpSettings.ResumeLayout(false);
+            grpSettings.PerformLayout();
+            grpDataIO.ResumeLayout(false);
+            grpDataIO.PerformLayout();
+            ((System.ComponentModel.ISupportInitialize)numReadLen).EndInit();
+            grpLog.ResumeLayout(false);
+            ResumeLayout(false);
 
         }
 

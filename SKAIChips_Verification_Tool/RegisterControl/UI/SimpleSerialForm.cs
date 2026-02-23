@@ -1,9 +1,5 @@
-﻿using System;
-using System.Drawing;
+﻿using SKAIChips_Verification_Tool.RegisterControl; // ProtocolSettings, I2cBus 등 참조
 using System.Globalization;
-using System.Linq;
-using System.Windows.Forms;
-using SKAIChips_Verification_Tool.RegisterControl; // ProtocolSettings, I2cBus 등 참조
 
 namespace SKAIChips_Verification_Tool
 {

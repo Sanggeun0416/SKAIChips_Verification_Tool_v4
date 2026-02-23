@@ -27,9 +27,9 @@ namespace SKAIChips_Verification_Tool.RegisterControl
             base.Dispose(disposing);
         }
 
-        
 
-        
+
+
         private void InitializeComponent()
         {
             lvDevices = new ListView();
@@ -41,13 +41,12 @@ namespace SKAIChips_Verification_Tool.RegisterControl
             btnOk = new Button();
             btnCancel = new Button();
             SuspendLayout();
-            
-            
-            
+            // 
+            // lvDevices
+            // 
             lvDevices.Columns.AddRange(new ColumnHeader[] { colIdx, colDesc, colSerial, colLocation });
             lvDevices.FullRowSelect = true;
             lvDevices.GridLines = true;
-            lvDevices.HideSelection = false;
             lvDevices.Location = new Point(12, 12);
             lvDevices.MultiSelect = false;
             lvDevices.Name = "lvDevices";
@@ -55,29 +54,29 @@ namespace SKAIChips_Verification_Tool.RegisterControl
             lvDevices.TabIndex = 0;
             lvDevices.UseCompatibleStateImageBehavior = false;
             lvDevices.View = View.Details;
-            
-            
-            
+            // 
+            // colIdx
+            // 
             colIdx.Text = "Index";
             colIdx.Width = 50;
-            
-            
-            
+            // 
+            // colDesc
+            // 
             colDesc.Text = "Description";
             colDesc.Width = 160;
-            
-            
-            
+            // 
+            // colSerial
+            // 
             colSerial.Text = "Serial";
             colSerial.Width = 120;
-            
-            
-            
+            // 
+            // colLocation
+            // 
             colLocation.Text = "Location";
             colLocation.Width = 100;
-            
-            
-            
+            // 
+            // btnRefresh
+            // 
             btnRefresh.Location = new Point(12, 218);
             btnRefresh.Name = "btnRefresh";
             btnRefresh.Size = new Size(80, 25);
@@ -85,9 +84,9 @@ namespace SKAIChips_Verification_Tool.RegisterControl
             btnRefresh.Text = "Refresh";
             btnRefresh.UseVisualStyleBackColor = true;
             btnRefresh.Click += btnRefresh_Click;
-            
-            
-            
+            // 
+            // btnOk
+            // 
             btnOk.Location = new Point(316, 218);
             btnOk.Name = "btnOk";
             btnOk.Size = new Size(75, 25);
@@ -95,9 +94,9 @@ namespace SKAIChips_Verification_Tool.RegisterControl
             btnOk.Text = "OK";
             btnOk.UseVisualStyleBackColor = true;
             btnOk.Click += btnOk_Click;
-            
-            
-            
+            // 
+            // btnCancel
+            // 
             btnCancel.Location = new Point(397, 218);
             btnCancel.Name = "btnCancel";
             btnCancel.Size = new Size(75, 25);
@@ -105,9 +104,9 @@ namespace SKAIChips_Verification_Tool.RegisterControl
             btnCancel.Text = "Cancel";
             btnCancel.UseVisualStyleBackColor = true;
             btnCancel.Click += btnCancel_Click;
-            
-            
-            
+            // 
+            // FtdiSetupForm
+            // 
             AcceptButton = btnOk;
             AutoScaleDimensions = new SizeF(7F, 15F);
             AutoScaleMode = AutoScaleMode.Font;
@@ -121,11 +120,12 @@ namespace SKAIChips_Verification_Tool.RegisterControl
             MaximizeBox = false;
             MinimizeBox = false;
             Name = "FtdiSetupForm";
+            ShowIcon = false;
             StartPosition = FormStartPosition.CenterParent;
             Text = "FTDI Device Setup";
             ResumeLayout(false);
         }
 
-        
+
     }
 }

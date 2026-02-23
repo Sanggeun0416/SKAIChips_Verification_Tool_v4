@@ -89,7 +89,7 @@ namespace SKAIChips_Verification_Tool.RegisterControl
             UpdateStatusText();
 
             tvRegTree.HideSelection = false;
-            tvRegTree.NodeMouseClick += TvRegTree_NodeMouseClick;
+            tvRegTree.MouseDown += TvRegTree_MouseDown;
         }
 
         private void InitLogGrid()
@@ -295,21 +295,28 @@ namespace SKAIChips_Verification_Tool.RegisterControl
             btnStopTest.Click += btnStopTest_Click;
         }
 
-        private void TvRegTree_NodeMouseClick(object? sender, TreeNodeMouseClickEventArgs e)
+        private void TvRegTree_MouseDown(object? sender, MouseEventArgs e)
         {
             if (e.Button != MouseButtons.Left)
                 return;
 
             var hitTest = tvRegTree.HitTest(e.Location);
 
-            if (hitTest.Location != TreeViewHitTestLocations.Label &&
-    hitTest.Location != TreeViewHitTestLocations.Image &&
-    hitTest.Location != TreeViewHitTestLocations.StateImage)
+            if (hitTest.Node == null ||
+                (hitTest.Location != TreeViewHitTestLocations.Label &&
+                 hitTest.Location != TreeViewHitTestLocations.Image &&
+                 hitTest.Location != TreeViewHitTestLocations.StateImage))
             {
                 return;
             }
 
-            TreeNode clickedNode = e.Node;
+            TreeNode clickedNode = hitTest.Node;
+
+            if (tvRegTree.SelectedNode != clickedNode)
+            {
+                tvRegTree.SelectedNode = clickedNode;
+            }
+
             Keys modifier = Control.ModifierKeys;
 
             tvRegTree.BeginUpdate();
@@ -364,19 +371,62 @@ namespace SKAIChips_Verification_Tool.RegisterControl
 
         private void ClearSelection()
         {
-            foreach (var node in _selectedNodes.ToList())
+            var oldNodes = _selectedNodes.ToList();
+            _selectedNodes.Clear();
+
+            foreach (var node in oldNodes)
             {
                 UpdateNodeVisual(node, false);
             }
-            _selectedNodes.Clear();
         }
 
         private void UpdateNodeVisual(TreeNode node, bool isSelected)
         {
-            if (isSelected)
+            if (node == null)
+                return;
+
+            RefreshNodeStyle(node);
+
+            if (node.Parent != null)
+            {
+                RefreshNodeStyle(node.Parent);
+                foreach (TreeNode sibling in node.Parent.Nodes)
+                {
+                    RefreshNodeStyle(sibling);
+                }
+            }
+
+            foreach (TreeNode child in node.Nodes)
+            {
+                RefreshNodeStyle(child);
+            }
+        }
+
+        private void RefreshNodeStyle(TreeNode node)
+        {
+            if (node == null)
+                return;
+
+            bool isExplicitlySelected = _selectedNodes.Contains(node);
+
+            bool isRegisterWithSelectedBit = (node.Tag is RegisterDetail) &&
+                                             node.Nodes.Cast<TreeNode>().Any(c => _selectedNodes.Contains(c));
+
+            bool hasSelectedParent = node.Parent != null && _selectedNodes.Contains(node.Parent);
+
+            bool isBitWithSelectedSibling = (node.Tag is RegisterItem) &&
+                                            node.Parent != null &&
+                                            node.Parent.Nodes.Cast<TreeNode>().Any(c => _selectedNodes.Contains(c));
+
+            if (isExplicitlySelected)
             {
                 node.BackColor = SystemColors.Highlight;
                 node.ForeColor = SystemColors.HighlightText;
+            }
+            else if (isRegisterWithSelectedBit || hasSelectedParent || isBitWithSelectedSibling)
+            {
+                node.BackColor = Color.LightSkyBlue;
+                node.ForeColor = Color.Black;
             }
             else
             {
@@ -554,6 +604,9 @@ namespace SKAIChips_Verification_Tool.RegisterControl
         {
             var actions = project?.GetTestSlotActions();
 
+            bool isConnected = (_i2cBus != null && _i2cBus.IsConnected) ||
+                       (_spiBus != null && _spiBus.IsConnected);
+
             for (int i = 0; i < 10; i++)
             {
                 var btn = _testSlotButtons[i];
@@ -562,7 +615,7 @@ namespace SKAIChips_Verification_Tool.RegisterControl
                 {
                     var slotInfo = actions[i];
                     btn.Text = slotInfo.Name;
-                    btn.Enabled = slotInfo.IsEnabled;
+                    btn.Enabled = isConnected && slotInfo.IsEnabled;
                     btn.Visible = slotInfo.IsVisible;
                     btn.Tag = slotInfo.Action;
                 }
@@ -1575,6 +1628,15 @@ namespace SKAIChips_Verification_Tool.RegisterControl
 
         private void tvRegs_AfterSelect(object sender, TreeViewEventArgs e)
         {
+            if (e.Action == TreeViewAction.ByKeyboard && e.Node != null)
+            {
+                tvRegTree.BeginUpdate();
+                ClearSelection();
+                AddSelection(e.Node);
+                _pivotNode = e.Node;
+                tvRegTree.EndUpdate();
+            }
+
             ResetSelectionState();
 
             if (e.Node?.Tag is RegisterGroup group)

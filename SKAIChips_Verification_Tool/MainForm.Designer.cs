@@ -52,7 +52,7 @@ namespace SKAIChips_Verification_Tool
             menuStrip1.Items.AddRange(new ToolStripItem[] { menuFile, menuTools, menuSetup });
             menuStrip1.Location = new Point(0, 0);
             menuStrip1.Name = "menuStrip1";
-            menuStrip1.Size = new Size(809, 24);
+            menuStrip1.Size = new Size(734, 24);
             menuStrip1.TabIndex = 0;
             menuStrip1.Text = "menuStrip1";
             // 
@@ -80,21 +80,21 @@ namespace SKAIChips_Verification_Tool
             // menuRegisterControl
             // 
             menuRegisterControl.Name = "menuRegisterControl";
-            menuRegisterControl.Size = new Size(160, 22);
+            menuRegisterControl.Size = new Size(201, 22);
             menuRegisterControl.Text = "Register Control";
             menuRegisterControl.Click += menuRegisterControl_Click;
             // 
             // menuHCIControl
             // 
             menuHCIControl.Name = "menuHCIControl";
-            menuHCIControl.Size = new Size(160, 22);
+            menuHCIControl.Size = new Size(201, 22);
             menuHCIControl.Text = "HCI Controller";
             menuHCIControl.Click += menuHCIControl_Click;
-            //
+            // 
             // menuSimpleSerial
-            //
-            menuSimpleSerial.Name = "menuMiniTool";
-            menuSimpleSerial.Size = new Size(160, 22);
+            // 
+            menuSimpleSerial.Name = "menuSimpleSerial";
+            menuSimpleSerial.Size = new Size(201, 22);
             menuSimpleSerial.Text = "Simple Serial Controller";
             menuSimpleSerial.Click += menuSimpleSerial_Click;
             // 
@@ -108,14 +108,14 @@ namespace SKAIChips_Verification_Tool
             // menuSetupInstrument
             // 
             menuSetupInstrument.Name = "menuSetupInstrument";
-            menuSetupInstrument.Size = new Size(180, 22);
+            menuSetupInstrument.Size = new Size(132, 22);
             menuSetupInstrument.Text = "Instrument";
             menuSetupInstrument.Click += menuSetupInstrument_Click;
             // 
             // getsAllToolStripMenuItem
             // 
             getsAllToolStripMenuItem.Name = "getsAllToolStripMenuItem";
-            getsAllToolStripMenuItem.Size = new Size(180, 22);
+            getsAllToolStripMenuItem.Size = new Size(132, 22);
             getsAllToolStripMenuItem.Text = "Gets All";
             getsAllToolStripMenuItem.Click += getsAllToolStripMenuItem_Click;
             // 
@@ -123,7 +123,7 @@ namespace SKAIChips_Verification_Tool
             // 
             AutoScaleDimensions = new SizeF(7F, 15F);
             AutoScaleMode = AutoScaleMode.Font;
-            ClientSize = new Size(809, 966);
+            ClientSize = new Size(734, 1001);
             Controls.Add(menuStrip1);
             Icon = (Icon)resources.GetObject("$this.Icon");
             IsMdiContainer = true;

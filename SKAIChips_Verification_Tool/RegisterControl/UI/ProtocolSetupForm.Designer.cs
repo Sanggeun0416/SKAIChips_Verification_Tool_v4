@@ -39,18 +39,18 @@ namespace SKAIChips_Verification_Tool.RegisterControl
             btnCancel = new Button();
             ((System.ComponentModel.ISupportInitialize)numSpeed).BeginInit();
             SuspendLayout();
-            
-            
-            
+            // 
+            // lblProtocol
+            // 
             lblProtocol.AutoSize = true;
             lblProtocol.Location = new Point(12, 15);
             lblProtocol.Name = "lblProtocol";
             lblProtocol.Size = new Size(52, 15);
             lblProtocol.TabIndex = 0;
             lblProtocol.Text = "Protocol";
-            
-            
-            
+            // 
+            // comboProtocol
+            // 
             comboProtocol.DropDownStyle = ComboBoxStyle.DropDownList;
             comboProtocol.FormattingEnabled = true;
             comboProtocol.Location = new Point(100, 12);
@@ -58,18 +58,18 @@ namespace SKAIChips_Verification_Tool.RegisterControl
             comboProtocol.Size = new Size(140, 23);
             comboProtocol.TabIndex = 1;
             comboProtocol.SelectedIndexChanged += comboProtocol_SelectedIndexChanged;
-            
-            
-            
+            // 
+            // lblSpeed
+            // 
             lblSpeed.AutoSize = true;
             lblSpeed.Location = new Point(12, 49);
             lblSpeed.Name = "lblSpeed";
             lblSpeed.Size = new Size(73, 15);
             lblSpeed.TabIndex = 2;
             lblSpeed.Text = "Speed [kHz]";
-            
-            
-            
+            // 
+            // numSpeed
+            // 
             numSpeed.Increment = new decimal(new int[] { 100, 0, 0, 0 });
             numSpeed.Location = new Point(100, 47);
             numSpeed.Maximum = new decimal(new int[] { 30000, 0, 0, 0 });
@@ -78,42 +78,42 @@ namespace SKAIChips_Verification_Tool.RegisterControl
             numSpeed.Size = new Size(140, 23);
             numSpeed.TabIndex = 3;
             numSpeed.Value = new decimal(new int[] { 400, 0, 0, 0 });
-            
-            
-            
+            // 
+            // lblSlaveAddr
+            // 
             lblSlaveAddr.AutoSize = true;
             lblSlaveAddr.Location = new Point(12, 84);
             lblSlaveAddr.Name = "lblSlaveAddr";
             lblSlaveAddr.Size = new Size(71, 15);
             lblSlaveAddr.TabIndex = 4;
             lblSlaveAddr.Text = "I2C Address";
-            
-            
-            
+            // 
+            // txtSlaveAddr
+            // 
             txtSlaveAddr.Location = new Point(100, 81);
             txtSlaveAddr.Name = "txtSlaveAddr";
             txtSlaveAddr.Size = new Size(140, 23);
             txtSlaveAddr.TabIndex = 5;
             txtSlaveAddr.Text = "0x52";
-            
-            
-            
+            // 
+            // lblSpiMode
+            // 
             lblSpiMode.AutoSize = true;
             lblSpiMode.Location = new Point(12, 84);
             lblSpiMode.Name = "lblSpiMode";
             lblSpiMode.Size = new Size(59, 15);
             lblSpiMode.TabIndex = 6;
             lblSpiMode.Text = "SPI Mode";
-            
-            
-            
+            // 
+            // comboSpiMode
+            // 
             comboSpiMode.Location = new Point(100, 81);
             comboSpiMode.Name = "comboSpiMode";
             comboSpiMode.Size = new Size(140, 23);
             comboSpiMode.TabIndex = 0;
-            
-            
-            
+            // 
+            // btnOk
+            // 
             btnOk.Location = new Point(84, 119);
             btnOk.Name = "btnOk";
             btnOk.Size = new Size(75, 25);
@@ -121,9 +121,9 @@ namespace SKAIChips_Verification_Tool.RegisterControl
             btnOk.Text = "OK";
             btnOk.UseVisualStyleBackColor = true;
             btnOk.Click += btnOk_Click;
-            
-            
-            
+            // 
+            // btnCancel
+            // 
             btnCancel.Location = new Point(165, 119);
             btnCancel.Name = "btnCancel";
             btnCancel.Size = new Size(75, 25);
@@ -131,9 +131,9 @@ namespace SKAIChips_Verification_Tool.RegisterControl
             btnCancel.Text = "Cancel";
             btnCancel.UseVisualStyleBackColor = true;
             btnCancel.Click += btnCancel_Click;
-            
-            
-            
+            // 
+            // ProtocolSetupForm
+            // 
             AcceptButton = btnOk;
             AutoScaleDimensions = new SizeF(7F, 15F);
             AutoScaleMode = AutoScaleMode.Font;
@@ -153,6 +153,7 @@ namespace SKAIChips_Verification_Tool.RegisterControl
             MaximizeBox = false;
             MinimizeBox = false;
             Name = "ProtocolSetupForm";
+            ShowIcon = false;
             StartPosition = FormStartPosition.CenterParent;
             Text = "Protocol Setup";
             ((System.ComponentModel.ISupportInitialize)numSpeed).EndInit();

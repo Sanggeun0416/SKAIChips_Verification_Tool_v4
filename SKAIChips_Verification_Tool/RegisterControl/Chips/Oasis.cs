@@ -1,7 +1,4 @@
-﻿using System.Threading.Tasks;
-using static System.Windows.Forms.VisualStyles.VisualStyleElement.TextBox;
-
-namespace SKAIChips_Verification_Tool.RegisterControl
+﻿namespace SKAIChips_Verification_Tool.RegisterControl
 {
     public class Oasis : ProjectBase
     {
@@ -91,7 +88,7 @@ namespace SKAIChips_Verification_Tool.RegisterControl
             if (I2cBus == null)
                 throw new InvalidOperationException("I2C Bus is not connected.");
 
-            Span<byte> cmd = [ 0xA1, 0x2C, 0x56, 0x78 ];
+            Span<byte> cmd = [0xA1, 0x2C, 0x56, 0x78];
             I2cBus.Write(DeviceAddress, cmd, stop: true);
             Thread.Sleep(50);
         }
@@ -101,7 +98,7 @@ namespace SKAIChips_Verification_Tool.RegisterControl
             if (I2cBus == null)
                 throw new InvalidOperationException("I2C Bus is not connected.");
 
-            Span<byte> cmd = [ 0xA1, 0x2C, 0xAB, 0xCD ];
+            Span<byte> cmd = [0xA1, 0x2C, 0xAB, 0xCD];
             I2cBus.Write(DeviceAddress, cmd, stop: true);
             Thread.Sleep(50);
         }
@@ -903,7 +900,7 @@ namespace SKAIChips_Verification_Tool.RegisterControl
             // DA_LDO = 0, TX_DA_GC = 0
             uint reg0xDC34_00B0 = ReadRegister(0xDC34_00B0);    // AFE_REG 0x2C
             uint reg0xDC34_00C0 = ReadRegister(0xDC34_00C0);    // AFE_REG 0x30
-            
+
             //TX_DA_GC.Value = 0;
             WriteRegister(0xDC34_00B0, reg0xDC34_00B0 & 0x87FF);
             //DA_LDO_CONT.Value = 0;
@@ -970,10 +967,10 @@ namespace SKAIChips_Verification_Tool.RegisterControl
             if (SignalGenerator0 == null)
                 throw new InvalidOperationException("SpectrumAnalyzer is not connected.");
 
-            var PLL_PEN = _regCont.RegMgr.GetRegisterItem(this,"w_PLL_PEN");            //0x0C
-            var DRV_TPE = _regCont.RegMgr.GetRegisterItem(this,"O_ABB_DRV_TPE[3:0]");   //0x14
-            var SPI_CH_SEL = _regCont.RegMgr.GetRegisterItem(this,"m_SPI_CH_SEL[6:0]"); //0x0F
-            var RX_RF_GC = _regCont.RegMgr.GetRegisterItem(this,"r_RX_RF_GC[1:0]");     //0x2C
+            var PLL_PEN = _regCont.RegMgr.GetRegisterItem(this, "w_PLL_PEN");            //0x0C
+            var DRV_TPE = _regCont.RegMgr.GetRegisterItem(this, "O_ABB_DRV_TPE[3:0]");   //0x14
+            var SPI_CH_SEL = _regCont.RegMgr.GetRegisterItem(this, "m_SPI_CH_SEL[6:0]"); //0x0F
+            var RX_RF_GC = _regCont.RegMgr.GetRegisterItem(this, "r_RX_RF_GC[1:0]");     //0x2C
 
             WriteRegister(0xDC34001C, 0x4213);  //REG 0x07
             WriteRegister(0xDC340020, 0x8C00);  //REG 0x08

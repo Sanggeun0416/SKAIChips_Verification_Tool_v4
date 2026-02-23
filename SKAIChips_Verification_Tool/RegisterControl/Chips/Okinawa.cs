@@ -1,10 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Threading;
-using System.Threading.Tasks;
-using System.Windows.Forms;
-
-namespace SKAIChips_Verification_Tool.RegisterControl
+﻿namespace SKAIChips_Verification_Tool.RegisterControl
 {
     public class Okinawa : ProjectBase
     {

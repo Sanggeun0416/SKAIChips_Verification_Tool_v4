@@ -315,6 +315,11 @@ namespace SKAIChips_Verification_Tool.RegisterControl
             }
         }
 
+        private void InitializeComponent()
+        {
+
+        }
+
         private void BtnOK_Click(object sender, EventArgs e)
         {
             if (totalBytes <= 0 || segmentsPerGrid == 0)

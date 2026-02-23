@@ -1,6 +1,4 @@
-﻿using static System.Runtime.InteropServices.JavaScript.JSType;
-
-namespace SKAIChips_Verification_Tool.RegisterControl
+﻿namespace SKAIChips_Verification_Tool.RegisterControl
 {
     public class Lisbon : ProjectBase
     {
