@@ -29,6 +29,29 @@
             };*/
         }
 
+        public bool PrepareTest(string testId, ITestUiContext uiContext)
+        {
+            if (testId == "FW.FLASH_WRITE")
+            {
+                string? filePath = uiContext.OpenFileDialog("FW File (*.bin;*.hex)|*.bin;*.hex|All files (*.*)|*.*", "Select Firmware File");
+                if (string.IsNullOrEmpty(filePath))
+                    return false;
+
+                SetFirmwareFilePath(filePath);
+            }
+            else if (testId == "FW.FLASH_VERIFY" || testId == "FW.FLASH_READ")
+            {
+                string? sizeStr = uiContext.PromptInput("FLASH FUNCTION", "Enter the Flash Size[Byte]:", "524288");
+
+                if (string.IsNullOrEmpty(sizeStr) || !uint.TryParse(sizeStr, out uint flashSize) || flashSize == 0)
+                    return false;
+
+                SetFlashSize(flashSize);
+            }
+
+            return true;
+        }
+
         private const uint RegI2cId = 0x5000_0000;
         private const uint RegFlashCmd = 0x5009_0008;
         private const uint RegFlashStatus = 0x5009_0020;

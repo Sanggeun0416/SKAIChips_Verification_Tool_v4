@@ -48,6 +48,9 @@ namespace SKAIChips_Verification_Tool.RegisterControl
         {
             get;
         }
+
+        bool PrepareTest(string testId, ITestUiContext uiContext);
+
         Task Run_TEST(string testId, Func<string, string, Task> log, CancellationToken cancellationToken);
     }
 

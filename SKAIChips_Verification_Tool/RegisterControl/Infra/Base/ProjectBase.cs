@@ -186,6 +186,11 @@ namespace SKAIChips_Verification_Tool.RegisterControl
             return func();
         }
 
+        public virtual bool PrepareTest(string testId, ITestUiContext uiContext)
+        {
+            return true;
+        }
+
         protected string GetSheetNameByAddress(uint address)
         {
             if (_regCont?.RegMgr == null)
