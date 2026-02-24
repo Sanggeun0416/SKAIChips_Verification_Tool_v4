@@ -5,7 +5,7 @@ using Excel = Microsoft.Office.Interop.Excel;
 
 namespace SKAIChips_Verification_Tool.RegisterControl
 {
-    public partial class RegisterControlForm : Form, ITestUiContext
+    public partial class RegisterControlForm : Form
     {
         private Excel.Application? _excelApp;
         private Excel.Workbook? _excelWb;
@@ -33,7 +33,6 @@ namespace SKAIChips_Verification_Tool.RegisterControl
 
         private RegisterFieldManager? _regMgr;
         public RegisterFieldManager RegMgr => _regMgr ?? throw new InvalidOperationException("Register map not loaded.");
-        private readonly Dictionary<RegisterDetail, List<TreeNode>> _registerNodeCache = new();
 
         private readonly Button[] _bitButtons = new Button[32];
         private bool _isUpdatingBits;
@@ -59,17 +58,15 @@ namespace SKAIChips_Verification_Tool.RegisterControl
             InitUi();
         }
 
-        protected override void OnFormClosed(FormClosedEventArgs e)
+        protected override void OnFormClosing(FormClosingEventArgs e)
         {
-            base.OnFormClosed(e);
-
+            base.OnFormClosing(e);
             try
             {
                 _testCts?.Cancel();
                 _xl?.Close();
             }
             catch { }
-
             DisconnectBus();
             _xl = null;
 
@@ -254,8 +251,6 @@ namespace SKAIChips_Verification_Tool.RegisterControl
             SetBitButtonsEnabledForItem(null);
 
             txtRegValueHex.Leave += txtRegValueHex_Leave;
-
-            txtRegValueHex.KeyDown += TxtRegValueHex_KeyDown;
 
             btnWriteAll.Click += btnWriteAll_Click;
             btnReadAll.Click += btnReadAll_Click;
@@ -589,26 +584,18 @@ namespace SKAIChips_Verification_Tool.RegisterControl
             }
         }
 
-        private async void TestSlotButton_Click(object sender, EventArgs e)
+        private void TestSlotButton_Click(object sender, EventArgs e)
         {
             if (sender is Button btn && btn.Tag is Action action)
             {
                 try
                 {
-                    btn.Enabled = false;
-
-                    await Task.Run(() => action.Invoke());
-
-                    AppendLog($"[Info] Test Slot Executed Successfully: {btn.Text}");
+                    action.Invoke();
                 }
                 catch (Exception ex)
                 {
                     AppendLog($"[Error] Test Slot Execution Failed: {ex.Message}");
-                    MessageBox.Show($"Error: {ex.Message}", "Action Failed", MessageBoxButtons.OK, MessageBoxIcon.Error);
-                }
-                finally
-                {
-                    btn.Enabled = true;
+                    MessageBox.Show($"Error: {ex.Message}");
                 }
             }
         }
@@ -696,18 +683,12 @@ namespace SKAIChips_Verification_Tool.RegisterControl
 
             if (matchedNodes.Count == 0)
             {
-                MessageBox.Show($"키워드 '{keyword}'에 해당하는 레지스터를 찾을 수 없습니다.", "검색 결과", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                MessageBox.Show("No registers found with keyword: " + keyword, "Search Result");
                 return;
             }
 
             if (matchedNodes.Count == 1)
             {
-                tvRegTree.BeginUpdate();
-                ClearSelection();
-                AddSelection(matchedNodes[0]);
-                _pivotNode = matchedNodes[0];
-                tvRegTree.EndUpdate();
-
                 tvRegTree.SelectedNode = matchedNodes[0];
                 matchedNodes[0].EnsureVisible();
                 return;
@@ -769,13 +750,6 @@ namespace SKAIChips_Verification_Tool.RegisterControl
                     if (index >= 0)
                     {
                         TreeNode selected = matchedNodes[index];
-
-                        tvRegTree.BeginUpdate();
-                        ClearSelection();
-                        AddSelection(selected);
-                        _pivotNode = selected;
-                        tvRegTree.EndUpdate();
-
                         tvRegTree.SelectedNode = selected;
                         selected.EnsureVisible();
                         resultsForm.Close();
@@ -790,8 +764,7 @@ namespace SKAIChips_Verification_Tool.RegisterControl
         private List<TreeNode> FindAllMatchingNodes(TreeNode root, string keyword)
         {
             List<TreeNode> result = new List<TreeNode>();
-
-            if (root.Text.IndexOf(keyword, StringComparison.OrdinalIgnoreCase) >= 0)
+            if (root.Text.ToUpper().Contains(keyword))
                 result.Add(root);
 
             foreach (TreeNode child in root.Nodes)
@@ -800,14 +773,14 @@ namespace SKAIChips_Verification_Tool.RegisterControl
             return result;
         }
 
-        private TreeNode? FindNodeRecursive(TreeNode root, string keyword)
+        private TreeNode FindNodeRecursive(TreeNode root, string keyword)
         {
-            if (root.Text.IndexOf(keyword, StringComparison.OrdinalIgnoreCase) >= 0)
+            if (root.Text.ToUpper().Contains(keyword))
                 return root;
 
             foreach (TreeNode child in root.Nodes)
             {
-                TreeNode? result = FindNodeRecursive(child, keyword);
+                TreeNode result = FindNodeRecursive(child, keyword);
                 if (result != null)
                     return result;
             }
@@ -978,11 +951,6 @@ namespace SKAIChips_Verification_Tool.RegisterControl
 
         private void AddLog(string type, string addrText, string dataText, string result)
         {
-            if (dgvRegLog.Rows.Count > 1000)
-            {
-                dgvRegLog.Rows.RemoveAt(0);
-            }
-
             int rowIndex = dgvRegLog.Rows.Add();
             var row = dgvRegLog.Rows[rowIndex];
 
@@ -997,14 +965,6 @@ namespace SKAIChips_Verification_Tool.RegisterControl
 
         public void AddTestLogRow(string level, string message)
         {
-            if (rtbRunTestLog.Lines.Length > 5000)
-            {
-                rtbRunTestLog.ReadOnly = false;
-                rtbRunTestLog.Select(0, rtbRunTestLog.GetFirstCharIndexFromLine(1000));
-                rtbRunTestLog.SelectedText = "";
-                rtbRunTestLog.ReadOnly = true;
-            }
-
             string line = $"[{DateTime.Now:HH:mm:ss}] [{level}] {message}";
             rtbRunTestLog.AppendText(line + Environment.NewLine);
             rtbRunTestLog.SelectionStart = rtbRunTestLog.TextLength;
@@ -1029,7 +989,7 @@ namespace SKAIChips_Verification_Tool.RegisterControl
                 rtbRunTestLog.SelectionStart = rtbRunTestLog.Text.Length;
                 rtbRunTestLog.ScrollToCaret();
             }
-            catch {  }
+            catch { /* 로그 에러는 무시 */ }
         }
 
         private static DeviceKind ResolveDeviceKind(FtdiDeviceSettings s)
@@ -1144,8 +1104,8 @@ namespace SKAIChips_Verification_Tool.RegisterControl
             else
             {
                 SelectProject(null);
-                MessageBox.Show($"파일 이름('{fileName}')에 일치하는 칩 프로젝트를 찾을 수 없습니다.\n프로젝트 키워드 설정을 확인해 주세요.", 
-                    "프로젝트 검색 실패", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                MessageBox.Show($"No project corresponding to file name ('{fileName}') was found.\nPlease check the project keywords.",
+                                "Project Not Found", MessageBoxButtons.OK, MessageBoxIcon.Warning);
             }
         }
 
@@ -1196,7 +1156,7 @@ namespace SKAIChips_Verification_Tool.RegisterControl
         {
             if (_selectedProject == null)
             {
-                MessageBox.Show("선택된 프로젝트가 없습니다.\n연결할 프로젝트를 먼저 선택해 주세요.", "알림", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                MessageBox.Show("Selected Project is Null.\nSelect the Project Name to Connect!!");
                 return;
             }
 
@@ -1204,13 +1164,13 @@ namespace SKAIChips_Verification_Tool.RegisterControl
 
             if (_ftdiSettings == null)
             {
-                MessageBox.Show("FTDI 장치가 설정되지 않았습니다.\n연결하려면 상단의 [Device Setup]을 진행해 주세요.", "알림", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                MessageBox.Show("FTDI Device is Null.\nSetup Device to Connect!!");
                 return;
             }
 
             if (_protocolSettings == null)
             {
-                MessageBox.Show("프로토콜 설정이 누락되었습니다.\n연결하려면 상단의 [Protocol Setup]을 진행해 주세요.", "알림", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                MessageBox.Show("Protocol Setting is Null.\nSetup Protocol Setting to Connect!!");
                 return;
             }
 
@@ -1227,7 +1187,7 @@ namespace SKAIChips_Verification_Tool.RegisterControl
                 {
                     if (_selectedProject is not II2cChipProject i2cProj)
                     {
-                        MessageBox.Show("선택한 프로젝트는 I2C 통신을 지원하지 않습니다.", "오류", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                        MessageBox.Show("The selected project is not an I2C chip project.");
                         return;
                     }
 
@@ -1235,7 +1195,7 @@ namespace SKAIChips_Verification_Tool.RegisterControl
                     if (!_i2cBus.Connect())
                     {
                         _i2cBus = null;
-                        MessageBox.Show("I2C 하드웨어 연결에 실패했습니다. 장치 연결 상태를 확인해 주세요.", "연결 실패", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                        MessageBox.Show("I2C Connect Failed.");
                         UpdateStatusText();
                         return;
                     }
@@ -1246,7 +1206,7 @@ namespace SKAIChips_Verification_Tool.RegisterControl
                 {
                     if (_selectedProject is not ISpiChipProject spiProj)
                     {
-                        MessageBox.Show("선택한 프로젝트는 SPI 통신을 지원하지 않습니다.", "오류", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                        MessageBox.Show("The selected project is not an SPI chip project.");
                         return;
                     }
 
@@ -1254,7 +1214,7 @@ namespace SKAIChips_Verification_Tool.RegisterControl
                     if (!_spiBus.Connect())
                     {
                         _spiBus = null;
-                        MessageBox.Show("SPI 하드웨어 연결에 실패했습니다. 장치 연결 상태를 확인해 주세요.", "연결 실패", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                        MessageBox.Show("SPI Connect Failed.");
                         UpdateStatusText();
                         return;
                     }
@@ -1263,7 +1223,7 @@ namespace SKAIChips_Verification_Tool.RegisterControl
                 }
                 else
                 {
-                    MessageBox.Show("지원하지 않는 프로토콜입니다.", "오류", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                    MessageBox.Show("Protocol not supported.");
                     return;
                 }
 
@@ -1281,7 +1241,7 @@ namespace SKAIChips_Verification_Tool.RegisterControl
             catch (Exception ex)
             {
                 DisconnectBus();
-                MessageBox.Show($"연결 중 오류가 발생했습니다:\n{ex.Message}", "연결 오류", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                MessageBox.Show("Connection Error: " + ex.Message);
             }
         }
 
@@ -1302,12 +1262,6 @@ namespace SKAIChips_Verification_Tool.RegisterControl
                     b.Enabled = isConnected;
 
             txtRegValueHex.Enabled = isConnected;
-
-            btnSaveScript.Enabled = isConnected;
-            btnLoadScript.Enabled = isConnected;
-
-            SetBitButtonsEnabledForItem(_selectedItem);
-            UpdateNumRegIndexForSelectedItem();
 
             bool hasTests = _testSuite != null && _testSuite.Tests != null && _testSuite.Tests.Count > 0;
             cmbTestCategory.Enabled = isConnected && hasTests;
@@ -1351,12 +1305,6 @@ namespace SKAIChips_Verification_Tool.RegisterControl
 
         private void btnConnect_Click(object sender, EventArgs e)
         {
-            if (_isRunningTest)
-            {
-                MessageBox.Show("현재 테스트가 실행 중입니다.\n연결을 끊기 전에 먼저 테스트를 중지해 주세요.", "경고", MessageBoxButtons.OK, MessageBoxIcon.Warning);
-                return;
-            }
-
             bool isConnected = (_i2cBus != null && _i2cBus.IsConnected) || (_spiBus != null && _spiBus.IsConnected);
 
             if (!isConnected)
@@ -1381,7 +1329,7 @@ namespace SKAIChips_Verification_Tool.RegisterControl
         {
             if (_selectedProject == null)
             {
-                MessageBox.Show("선택된 프로젝트가 없습니다.\n연결할 프로젝트를 먼저 선택해 주세요.", "알림", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                MessageBox.Show("Selected Project is null.\nOpen the Register Map Excel to Select Project Name!!");
                 return;
             }
 
@@ -1459,17 +1407,8 @@ namespace SKAIChips_Verification_Tool.RegisterControl
             }
             else
             {
-                MessageBox.Show("잘못된 레지스터 값 형식입니다.\n올바른 16진수 형태로 입력해 주세요. (예: 0x00000000)", "입력 오류", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                MessageBox.Show("Invalid register value format, e.g. 0x0000000000");
                 txtRegValueHex.Text = $"0x{_currentRegValue:X8}";
-            }
-        }
-
-        private void TxtRegValueHex_KeyDown(object? sender, KeyEventArgs e)
-        {
-            if (e.KeyCode == Keys.Enter)
-            {
-                e.SuppressKeyPress = true;
-                txtRegValueHex_Leave(sender, EventArgs.Empty);
             }
         }
 
@@ -1506,7 +1445,7 @@ namespace SKAIChips_Verification_Tool.RegisterControl
                     _regMapFilePath = null;
                     lblMapFileName.Text = "(No file)";
                     btnOpenMapPath.Enabled = false;
-                    MessageBox.Show($"엑셀 파일을 여는 중 오류가 발생했습니다:\n{ex.Message}", "엑셀 열기 실패", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                    MessageBox.Show("Fail to Open Excel: " + ex.Message);
                 }
             }
         }
@@ -1556,13 +1495,13 @@ namespace SKAIChips_Verification_Tool.RegisterControl
         {
             if (string.IsNullOrEmpty(_regMapFilePath))
             {
-                MessageBox.Show("레지스터 맵 파일이 선택되지 않았습니다.\n먼저 엑셀 파일을 열어 시트를 선택해 주세요.", "알림", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                MessageBox.Show("Register Map File Path is Null.\nOpen the Register Map Excel to Select Sheet!!");
                 return;
             }
 
             if (clbRegMapSheets.CheckedItems.Count == 0)
             {
-                MessageBox.Show("선택된 시트가 없습니다.\n트리에 로드할 시트를 목록에서 체크해 주세요.", "알림", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                MessageBox.Show("Checked Sheet is Null.\nCheck Sheet to Load Register Tree!!");
                 return;
             }
 
@@ -1592,7 +1531,7 @@ namespace SKAIChips_Verification_Tool.RegisterControl
             }
             catch (Exception ex)
             {
-                MessageBox.Show($"레지스터 맵을 로드하는 중 오류가 발생했습니다:\n{ex.Message}", "로드 실패", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                MessageBox.Show("Fail to Load Register Map: " + ex.Message);
             }
         }
 
@@ -1600,7 +1539,7 @@ namespace SKAIChips_Verification_Tool.RegisterControl
         {
             if (string.IsNullOrEmpty(_regMapFilePath) || !File.Exists(_regMapFilePath))
             {
-                MessageBox.Show("현재 열려 있는 레지스터 맵 파일이 없습니다.", "알림", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                MessageBox.Show("There are no open register map files.");
                 return;
             }
 
@@ -1611,7 +1550,7 @@ namespace SKAIChips_Verification_Tool.RegisterControl
             }
             catch (Exception ex)
             {
-                MessageBox.Show("경로를 여는 중 오류가 발생했습니다: " + ex.Message);
+                MessageBox.Show("Fail to open Path: " + ex.Message);
             }
         }
 
@@ -1643,10 +1582,6 @@ namespace SKAIChips_Verification_Tool.RegisterControl
                         };
 
                         regNode.Nodes.Add(itemNode);
-
-                        if (!_registerNodeCache.ContainsKey(reg))
-                            _registerNodeCache[reg] = new List<TreeNode>();
-                        _registerNodeCache[reg].Add(itemNode);
                     }
 
                     groupNode.Nodes.Add(regNode);
@@ -1796,10 +1731,7 @@ namespace SKAIChips_Verification_Tool.RegisterControl
 
         private void SetBitButtonsEnabledForItem(RegisterItem? item)
         {
-            bool isConnected = (_i2cBus != null && _i2cBus.IsConnected) ||
-                               (_spiBus != null && _spiBus.IsConnected);
-
-            if (item == null || !isConnected)
+            if (item == null)
             {
                 for (int i = 0; i < _bitButtons.Length; i++)
                 {
@@ -1842,15 +1774,22 @@ namespace SKAIChips_Verification_Tool.RegisterControl
 
         private void UpdateTreeNodesForRegister(RegisterDetail reg, uint regValue)
         {
-            if (_registerNodeCache.TryGetValue(reg, out var itemNodes))
+            if (tvRegTree == null)
+                return;
+
+            var stack = new Stack<TreeNode>();
+            foreach (TreeNode root in tvRegTree.Nodes)
+                stack.Push(root);
+
+            while (stack.Count > 0)
             {
-                foreach (var node in itemNodes)
-                {
-                    if (node.Tag is RegisterItem item)
-                    {
-                        node.Text = FormatItemNodeText(item, regValue);
-                    }
-                }
+                var node = stack.Pop();
+
+                if (node.Tag is RegisterItem item && node.Parent?.Tag is RegisterDetail parentReg && ReferenceEquals(parentReg, reg))
+                    node.Text = FormatItemNodeText(item, regValue);
+
+                foreach (TreeNode child in node.Nodes)
+                    stack.Push(child);
             }
         }
 
@@ -1895,10 +1834,7 @@ namespace SKAIChips_Verification_Tool.RegisterControl
             _isUpdatingRegValue = true;
             try
             {
-                bool isConnected = (_i2cBus != null && _i2cBus.IsConnected) ||
-                                   (_spiBus != null && _spiBus.IsConnected);
-
-                if (_selectedItem == null || !isConnected)
+                if (_selectedItem == null)
                 {
                     numRegIndex.Enabled = false;
                     numRegIndex.Minimum = 0;
@@ -1913,7 +1849,6 @@ namespace SKAIChips_Verification_Tool.RegisterControl
 
                 numRegIndex.Minimum = 0;
                 numRegIndex.Maximum = mask;
-
                 numRegIndex.Enabled = true;
 
                 numRegIndex.Value = fieldVal <= mask ? fieldVal : mask;
@@ -2081,7 +2016,7 @@ namespace SKAIChips_Verification_Tool.RegisterControl
         {
             if (string.IsNullOrEmpty(_scriptFilePath) || !File.Exists(_scriptFilePath))
             {
-                MessageBox.Show("현재 열려 있는 스크립트 파일이 없습니다.", "알림", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                MessageBox.Show("No script files are open.");
                 return;
             }
 
@@ -2093,7 +2028,7 @@ namespace SKAIChips_Verification_Tool.RegisterControl
         {
             if (_chip == null)
             {
-                MessageBox.Show("하드웨어가 연결되지 않았습니다.\n읽기 작업을 수행하려면 먼저 장치를 연결해 주세요.", "알림", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                MessageBox.Show("Device is Null.\nConnect Device to Read!!");
                 return;
             }
 
@@ -2106,7 +2041,7 @@ namespace SKAIChips_Verification_Tool.RegisterControl
 
             if (targets.Count == 0)
             {
-                MessageBox.Show("읽어올 레지스터를 트리에서 선택하거나 다중 체크해 주세요.", "알림", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                MessageBox.Show("Check or select the register to read.");
                 return;
             }
 
@@ -2154,7 +2089,7 @@ namespace SKAIChips_Verification_Tool.RegisterControl
         {
             if (_chip == null)
             {
-                MessageBox.Show("하드웨어가 연결되지 않았습니다.\n쓰기 작업을 수행하려면 먼저 장치를 연결해 주세요.", "알림", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                MessageBox.Show("Device is Null.\nConnect Device to Write!!");
                 return;
             }
 
@@ -2167,7 +2102,7 @@ namespace SKAIChips_Verification_Tool.RegisterControl
 
             if (targets.Count == 0)
             {
-                MessageBox.Show("읽어올 레지스터를 트리에서 선택하거나 다중 체크해 주세요.", "알림", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                MessageBox.Show("Check or select the register to write.");
                 return;
             }
 
@@ -2223,13 +2158,13 @@ namespace SKAIChips_Verification_Tool.RegisterControl
         {
             if (_chip == null)
             {
-                MessageBox.Show("하드웨어가 연결되지 않았습니다.\n쓰기 작업을 수행하려면 먼저 장치를 연결해 주세요.", "알림", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                MessageBox.Show("Device is Null.\nConnect Device to Write!!");
                 return;
             }
 
             if (_groups.Count == 0)
             {
-                MessageBox.Show("레지스터 트리가 비어 있습니다.\n작업을 수행할 시트를 먼저 로드해 주세요.", "알림", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                MessageBox.Show("Register Tree is Null.\nLoad Sheet on Register Tree to Write!!");
                 return;
             }
 
@@ -2273,13 +2208,13 @@ namespace SKAIChips_Verification_Tool.RegisterControl
         {
             if (_chip == null)
             {
-                MessageBox.Show("하드웨어가 연결되지 않았습니다.\n읽기 작업을 수행하려면 먼저 장치를 연결해 주세요.", "알림", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                MessageBox.Show("Device is Null.\nConnect Device to Read!!");
                 return;
             }
 
             if (_groups.Count == 0)
             {
-                MessageBox.Show("레지스터 트리가 비어 있습니다.\n작업을 수행할 시트를 먼저 로드해 주세요.", "알림", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                MessageBox.Show("Register Tree is Null.\nLoad Sheet on Register Tree to Read!!");
                 return;
             }
 
@@ -2372,16 +2307,59 @@ namespace SKAIChips_Verification_Tool.RegisterControl
 
         private async void btnRunTest_Click(object sender, EventArgs e)
         {
-            if (_testSuite == null || _isRunningTest)
-                return;
-            if (cmbTest.SelectedItem is not ChipTestInfo info)
-                return;
-
-
-            if (!_testSuite.PrepareTest(info.Id, this))
+            if (_testSuite == null)
             {
-                AppendLog("[Info] Test cancelled by user.");
+                MessageBox.Show($"{_selectedProject} is not Supported Run Test!!");
                 return;
+            }
+
+            if (_isRunningTest)
+            {
+                MessageBox.Show("Test is already running!!");
+                return;
+            }
+
+            if (cmbTest.SelectedItem is not ChipTestInfo info)
+            {
+                MessageBox.Show("Selected Item is Null.\nSelect Test to Running!!");
+                return;
+            }
+
+            if (info.Id == "FW.FLASH_WRITE")
+            {
+                using (var ofd = new OpenFileDialog())
+                {
+                    ofd.Filter = "FW File (*.bin;*.hex)|*.bin;*.hex|All files (*.*)|*.*";
+                    ofd.Title = "Select Firmware File";
+
+                    if (ofd.ShowDialog(this) != DialogResult.OK)
+                    {
+                        MessageBox.Show("Canceled to Select .bin File.");
+                        return;
+                    }
+
+                    if (_testSuite is Oasis oasisSuite)
+                        oasisSuite.SetFirmwareFilePath(ofd.FileName);
+                }
+            }
+
+            if (info.Id == "FW.FLASH_VERIFY" || info.Id == "FW.FLASH_READ")
+            {
+                string? s = PromptText("FLASH FUNCTION", "Enter the Flash Size[Byte]:", "524288");
+                if (string.IsNullOrWhiteSpace(s))
+                {
+                    MessageBox.Show("Canceled to enter Flash Size.");
+                    return;
+                }
+
+                if (!uint.TryParse(s, out uint flashSize) || flashSize == 0)
+                {
+                    MessageBox.Show("Flash size must be bigger than 0!!.");
+                    return;
+                }
+
+                if (_testSuite is Oasis oasisSuite)
+                    oasisSuite.SetFlashSize(flashSize);
             }
 
             _testCts = new CancellationTokenSource();
@@ -2498,17 +2476,6 @@ namespace SKAIChips_Verification_Tool.RegisterControl
 
                 return obj as T;
             }
-        }
-
-        public string? OpenFileDialog(string filter, string title)
-        {
-            using var ofd = new OpenFileDialog { Filter = filter, Title = title };
-            return ofd.ShowDialog(this) == DialogResult.OK ? ofd.FileName : null;
-        }
-
-        public string? PromptInput(string title, string label, string defaultValue)
-        {
-            return PromptText(title, label, defaultValue);
         }
     }
 }

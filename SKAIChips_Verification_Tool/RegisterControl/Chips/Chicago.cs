@@ -34,8 +34,8 @@ namespace SKAIChips_Verification_Tool.RegisterControl
         {
             return new[]
             {
-                new TestSlotAction("SRAM_W", async () => await WriteSramWithHexForm()),
-                new TestSlotAction("SRAM_R", async () => await ReadSramWithHexForm())
+                new TestSlotAction("WriteSRAM", async () => await WriteSramWithHexForm()),
+                new TestSlotAction("ReadSRAM", async () => await ReadSramWithHexForm())
             };
         }
 

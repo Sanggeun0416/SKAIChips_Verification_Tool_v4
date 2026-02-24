@@ -16,9 +16,6 @@ namespace SKAIChips_Verification_Tool
             InitializeComponent();
             this.MdiChildActivate += MainForm_MdiChildActivate;
             InstrumentRegistry.Instance.Load();
-
-            menuSimpleSerial.Enabled = false;
-            menuFile.Visible = false;
         }
 
         private void MainForm_Load(object sender, EventArgs e)
@@ -133,24 +130,6 @@ namespace SKAIChips_Verification_Tool
             });
 
             regForm.AppendLog($"[Result] {successCount} / {totalCount} Instruments Connected.");
-        }
-
-        protected override void OnFormClosing(FormClosingEventArgs e)
-        {
-            DialogResult result = MessageBox.Show(
-                "프로그램을 정말 종료하시겠습니까?\n(진행 중인 모든 연결이 끊어집니다.)",
-                "종료 확인",
-                MessageBoxButtons.YesNo,
-                MessageBoxIcon.Question
-            );
-
-            if (result == DialogResult.No)
-            {
-                e.Cancel = true;
-                return;
-            }
-
-            base.OnFormClosing(e);
         }
     }
 }
