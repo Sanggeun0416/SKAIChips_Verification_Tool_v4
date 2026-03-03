@@ -57,6 +57,7 @@
                     var reg = rg.AddRegister(regName, address);
 
                     uint resetValue = 0;
+                    int maxBit = 0;
 
                     for (var column = xStart + 1; column < colCount; column++)
                     {
@@ -76,6 +77,9 @@
 
                         if (!int.TryParse(regData[row, column], out var upperBit))
                             continue;
+
+                        if (upperBit > maxBit)
+                            maxBit = upperBit;
 
                         var lowerBit = upperBit;
 
@@ -143,6 +147,14 @@
                         resetValue &= ~(mask << lowerBit);
                         resetValue |= val << lowerBit;
                     }
+                    if (maxBit <= 7)
+                        reg.BitWidth = 8;
+                    else if (maxBit <= 15)
+                        reg.BitWidth = 16;
+                    else if (maxBit <= 23)
+                        reg.BitWidth = 24;
+                    else
+                        reg.BitWidth = 32;
 
                     reg.ResetValue = resetValue;
                 }

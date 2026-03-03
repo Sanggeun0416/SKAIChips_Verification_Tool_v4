@@ -2,7 +2,6 @@
 {
     public class RegisterDetail
     {
-
         public string Name
         {
             get;
@@ -15,6 +14,9 @@
         {
             get; set;
         }
+
+        public int BitWidth { get; set; } = 32;
+
         public List<RegisterItem> Items { get; } = new List<RegisterItem>();
 
         public RegisterDetail(string name, uint address)
@@ -27,6 +29,5 @@
         {
             Items.Add(new RegisterItem(name, upperBit, lowerBit, defaultValue, description));
         }
-
     }
 }

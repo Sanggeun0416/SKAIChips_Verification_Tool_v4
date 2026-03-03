@@ -1460,7 +1460,9 @@ namespace SKAIChips_Verification_Tool.RegisterControl
             else
             {
                 MessageBox.Show("잘못된 레지스터 값 형식입니다.\n올바른 16진수 형태로 입력해 주세요. (예: 0x00000000)", "입력 오류", MessageBoxButtons.OK, MessageBoxIcon.Error);
-                txtRegValueHex.Text = $"0x{_currentRegValue:X8}";
+
+                int hexLength = (_selectedRegister != null) ? (_selectedRegister.BitWidth / 4) : 8;
+                txtRegValueHex.Text = $"0x{_currentRegValue.ToString("X" + hexLength)}";
             }
         }
 
@@ -1828,6 +1830,8 @@ namespace SKAIChips_Verification_Tool.RegisterControl
 
         private void UpdateBitCurrentValues()
         {
+            int hexLength = (_selectedRegister != null) ? (_selectedRegister.BitWidth / 4) : 8;
+
             txtRegValueHex.Text = $"0x{_currentRegValue:X8}";
 
             if (_selectedRegister != null)
