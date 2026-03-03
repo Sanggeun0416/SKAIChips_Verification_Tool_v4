@@ -1,16 +1,24 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 
-  <PropertyGroup>
-    <OutputType>WinExe</OutputType>
-    <TargetFramework>net8.0-windows</TargetFramework>
-    <RootNamespace>SKAIChips_Verification_Tool</RootNamespace>
-    <Nullable>enable</Nullable>
-    <UseWindowsForms>true</UseWindowsForms>
-    <ImplicitUsings>enable</ImplicitUsings>
-    <PlatformTarget>x64</PlatformTarget>
-    <AssemblyName>SKAIChips_Verification_Tool</AssemblyName>
-    <ApplicationIcon>cat_icon_128.ico</ApplicationIcon>
-  </PropertyGroup>
+<PropertyGroup>
+  <OutputType>WinExe</OutputType>
+  <TargetFramework>net8.0-windows</TargetFramework>
+  <RootNamespace>SKAIChips_Verification_Tool</RootNamespace>
+  <Nullable>enable</Nullable>
+  <UseWindowsForms>true</UseWindowsForms>
+  <ImplicitUsings>enable</ImplicitUsings>
+  <PlatformTarget>x64</PlatformTarget>
+  <AssemblyName>SKAIChips_Verification_Tool</AssemblyName>
+  <ApplicationIcon>cat_icon_128.ico</ApplicationIcon>
+
+  <PublishSingleFile>true</PublishSingleFile>
+  <SelfContained>true</SelfContained>
+  <RuntimeIdentifier>win-x64</RuntimeIdentifier>
+  <IncludeNativeLibrariesForSelfExtract>true</IncludeNativeLibrariesForSelfExtract>
+
+  <DebugSymbols>false</DebugSymbols>
+  <DebugType>none</DebugType>
+</PropertyGroup>
 
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|AnyCPU'">
     <IsPublishable>True</IsPublishable>
@@ -53,12 +61,12 @@
   </ItemGroup>
 
   <ItemGroup>
-    <Content Include="FTD2XX.dll">
+    <EmbeddedResource Include="FTD2XX.dll">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-    </Content>
-    <Content Include="LibFT4222-64.dll">
+    </EmbeddedResource>
+    <EmbeddedResource Include="LibFT4222-64.dll">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-    </Content>
+    </EmbeddedResource>
   </ItemGroup>
 
   <ItemGroup>

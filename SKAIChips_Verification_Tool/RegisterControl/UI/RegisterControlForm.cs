@@ -1029,7 +1029,7 @@ namespace SKAIChips_Verification_Tool.RegisterControl
                 rtbRunTestLog.SelectionStart = rtbRunTestLog.Text.Length;
                 rtbRunTestLog.ScrollToCaret();
             }
-            catch {  }
+            catch { }
         }
 
         private static DeviceKind ResolveDeviceKind(FtdiDeviceSettings s)
@@ -1144,7 +1144,7 @@ namespace SKAIChips_Verification_Tool.RegisterControl
             else
             {
                 SelectProject(null);
-                MessageBox.Show($"파일 이름('{fileName}')에 일치하는 칩 프로젝트를 찾을 수 없습니다.\n프로젝트 키워드 설정을 확인해 주세요.", 
+                MessageBox.Show($"파일 이름('{fileName}')에 일치하는 칩 프로젝트를 찾을 수 없습니다.\n프로젝트 키워드 설정을 확인해 주세요.",
                     "프로젝트 검색 실패", MessageBoxButtons.OK, MessageBoxIcon.Warning);
             }
         }
