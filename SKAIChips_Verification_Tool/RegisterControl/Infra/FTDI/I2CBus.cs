@@ -89,6 +89,8 @@
         {
             EnsureConnected();
 
+            byte targetAddr = _settings.I2cSlaveAddress;
+
             if (_settings.DeviceKind == DeviceKind.FT4222)
             {
                 var buf = data.ToArray();
@@ -102,6 +104,8 @@
         public void Read(byte slaveAddr, Span<byte> buffer, int timeoutMs)
         {
             EnsureConnected();
+
+            byte targetAddr = _settings.I2cSlaveAddress;
 
             if (_settings.DeviceKind == DeviceKind.FT4222)
             {
@@ -118,6 +122,8 @@
         public void WriteRead(byte slaveAddr, ReadOnlySpan<byte> w, Span<byte> r, int timeoutMs)
         {
             EnsureConnected();
+
+            byte targetAddr = _settings.I2cSlaveAddress;
 
             if (_settings.DeviceKind == DeviceKind.FT4222)
             {
