@@ -19,6 +19,7 @@ namespace SKAIChips_Verification_Tool.RegisterControl
         private Button btnSelectMapFile;
         private CheckedListBox clbRegMapSheets;
         private Button btnLoadSelectedSheets;
+        private CheckBox chkAutoArrange;
         private TreeView tvRegTree;
         private Button btnSaveScript;
         private Button btnLoadScript;
@@ -54,6 +55,30 @@ namespace SKAIChips_Verification_Tool.RegisterControl
         private ComboBox cmbTest;
         private Button btnRunTest;
         private Button btnStopTest;
+        private SplitContainer splMain;
+        private TableLayoutPanel tlpLeft;
+        private TableLayoutPanel tlpRight;
+        private Button btnTestSlot05;
+        private Button btnTestSlot03;
+        private Button btnTestSlot02;
+        private Button btnTestSlot01;
+        private Button btnTestSlot04;
+        private TableLayoutPanel tlpRegTree;
+        private Panel pnlScriptButtons;
+        private TableLayoutPanel tlpRegMap;
+        private Panel pnlRegMapButtons;
+        private TableLayoutPanel tlpRunTest;
+        private Panel pnlRunTestButtons;
+        private Button btnTestSlot06;
+        private Button btnTestSlot07;
+        private Button btnTestSlot08;
+        private Button btnTestSlot09;
+        private Button btnTestSlot10;
+        private RichTextBox rtbRunTestLog;
+        private Label lblSelectedProject;
+        private ProgressBar probarRuntest;
+        private Panel panelProgress;
+        private Panel panelTestLog;
 
         protected override void Dispose(bool disposing)
         {
@@ -96,6 +121,7 @@ namespace SKAIChips_Verification_Tool.RegisterControl
             pnlRegMapButtons = new Panel();
             btnOpenMapPath = new Button();
             lblMapFileName = new Label();
+            chkAutoArrange = new CheckBox();
             grpRegControl = new GroupBox();
             numRegIndex = new NumericUpDown();
             txtRegValueHex = new TextBox();
@@ -172,13 +198,14 @@ namespace SKAIChips_Verification_Tool.RegisterControl
             // dgvRegLog
             // 
             dgvRegLog.AllowUserToAddRows = false;
-            dgvRegLog.AutoSizeColumnsMode = DataGridViewAutoSizeColumnsMode.Fill;
+            dgvRegLog.AutoSizeColumnsMode = DataGridViewAutoSizeColumnsMode.DisplayedCells;
             dgvRegLog.ColumnHeadersHeightSizeMode = DataGridViewColumnHeadersHeightSizeMode.AutoSize;
             dgvRegLog.Columns.AddRange(new DataGridViewColumn[] { colRegLogTime, colRegLogType, colRegLogAddr, colRegLogData, colRegLogResult });
             dgvRegLog.Dock = DockStyle.Fill;
             dgvRegLog.Location = new Point(3, 19);
             dgvRegLog.Name = "dgvRegLog";
             dgvRegLog.ReadOnly = true;
+            dgvRegLog.RowHeadersVisible = false;
             dgvRegLog.SelectionMode = DataGridViewSelectionMode.FullRowSelect;
             dgvRegLog.Size = new Size(358, 373);
             dgvRegLog.TabIndex = 8;
@@ -188,30 +215,35 @@ namespace SKAIChips_Verification_Tool.RegisterControl
             colRegLogTime.HeaderText = "Time";
             colRegLogTime.Name = "colRegLogTime";
             colRegLogTime.ReadOnly = true;
+            colRegLogTime.Width = 58;
             // 
             // colRegLogType
             // 
             colRegLogType.HeaderText = "Type";
             colRegLogType.Name = "colRegLogType";
             colRegLogType.ReadOnly = true;
+            colRegLogType.Width = 57;
             // 
             // colRegLogAddr
             // 
             colRegLogAddr.HeaderText = "Addr";
             colRegLogAddr.Name = "colRegLogAddr";
             colRegLogAddr.ReadOnly = true;
+            colRegLogAddr.Width = 58;
             // 
             // colRegLogData
             // 
             colRegLogData.HeaderText = "Data";
             colRegLogData.Name = "colRegLogData";
             colRegLogData.ReadOnly = true;
+            colRegLogData.Width = 57;
             // 
             // colRegLogResult
             // 
             colRegLogResult.HeaderText = "Result";
             colRegLogResult.Name = "colRegLogResult";
             colRegLogResult.ReadOnly = true;
+            colRegLogResult.Width = 64;
             // 
             // btnRead
             // 
@@ -269,6 +301,7 @@ namespace SKAIChips_Verification_Tool.RegisterControl
             tvRegTree.Size = new Size(412, 458);
             tvRegTree.TabIndex = 22;
             tvRegTree.AfterSelect += tvRegs_AfterSelect;
+            tvRegTree.MouseDown += TvRegTree_MouseDown;
             // 
             // btnSaveScript
             // 
@@ -299,11 +332,12 @@ namespace SKAIChips_Verification_Tool.RegisterControl
             lblScriptFileName.Name = "lblScriptFileName";
             lblScriptFileName.Size = new Size(183, 19);
             lblScriptFileName.TabIndex = 25;
-            lblScriptFileName.Text = "(No script file)";
+            lblScriptFileName.Text = "(No script)";
             // 
             // btnOpenScriptPath
             // 
             btnOpenScriptPath.Anchor = AnchorStyles.Top | AnchorStyles.Right;
+            btnOpenScriptPath.Enabled = false;
             btnOpenScriptPath.Location = new Point(347, 4);
             btnOpenScriptPath.Margin = new Padding(2);
             btnOpenScriptPath.Name = "btnOpenScriptPath";
@@ -449,6 +483,7 @@ namespace SKAIChips_Verification_Tool.RegisterControl
             pnlRegMapButtons.Controls.Add(btnOpenMapPath);
             pnlRegMapButtons.Controls.Add(lblMapFileName);
             pnlRegMapButtons.Controls.Add(btnLoadSelectedSheets);
+            pnlRegMapButtons.Controls.Add(chkAutoArrange);
             pnlRegMapButtons.Dock = DockStyle.Fill;
             pnlRegMapButtons.Location = new Point(3, 77);
             pnlRegMapButtons.Name = "pnlRegMapButtons";
@@ -457,6 +492,7 @@ namespace SKAIChips_Verification_Tool.RegisterControl
             // 
             // btnOpenMapPath
             // 
+            btnOpenMapPath.Enabled = false;
             btnOpenMapPath.Location = new Point(297, 25);
             btnOpenMapPath.Name = "btnOpenMapPath";
             btnOpenMapPath.Size = new Size(50, 23);
@@ -472,6 +508,18 @@ namespace SKAIChips_Verification_Tool.RegisterControl
             lblMapFileName.Size = new Size(297, 15);
             lblMapFileName.TabIndex = 22;
             lblMapFileName.Text = "(No file)";
+            // 
+            // chkAutoArrange
+            // 
+            chkAutoArrange.AutoSize = true;
+            chkAutoArrange.Checked = true;
+            chkAutoArrange.CheckState = CheckState.Checked;
+            chkAutoArrange.Location = new Point(249, 6);
+            chkAutoArrange.Name = "chkAutoArrange";
+            chkAutoArrange.Size = new Size(98, 19);
+            chkAutoArrange.TabIndex = 26;
+            chkAutoArrange.Text = "Auto Arrange";
+            chkAutoArrange.UseVisualStyleBackColor = true;
             // 
             // grpRegControl
             // 
@@ -496,11 +544,13 @@ namespace SKAIChips_Verification_Tool.RegisterControl
             // 
             // numRegIndex
             // 
+            numRegIndex.Enabled = false;
             numRegIndex.Location = new Point(183, 17);
-            numRegIndex.Maximum = new decimal(new int[] { 65535, 0, 0, 0 });
+            numRegIndex.Maximum = new decimal(new int[] { 0, 0, 0, 0 });
             numRegIndex.Name = "numRegIndex";
             numRegIndex.Size = new Size(60, 23);
             numRegIndex.TabIndex = 0;
+            numRegIndex.ValueChanged += numRegIndex_ValueChanged;
             // 
             // txtRegValueHex
             // 
@@ -509,6 +559,8 @@ namespace SKAIChips_Verification_Tool.RegisterControl
             txtRegValueHex.Size = new Size(109, 23);
             txtRegValueHex.TabIndex = 1;
             txtRegValueHex.Text = "0x00000000";
+            txtRegValueHex.KeyDown += TxtRegValueHex_KeyDown;
+            txtRegValueHex.Leave += txtRegValueHex_Leave;
             // 
             // lblRegName
             // 
@@ -570,6 +622,7 @@ namespace SKAIChips_Verification_Tool.RegisterControl
             btnWriteAll.TabIndex = 6;
             btnWriteAll.Text = "Write All";
             btnWriteAll.UseVisualStyleBackColor = true;
+            btnWriteAll.Click += btnWriteAll_Click;
             // 
             // btnReadAll
             // 
@@ -579,6 +632,7 @@ namespace SKAIChips_Verification_Tool.RegisterControl
             btnReadAll.TabIndex = 8;
             btnReadAll.Text = "Read All";
             btnReadAll.UseVisualStyleBackColor = true;
+            btnReadAll.Click += btnReadAll_Click;
             // 
             // grpRegLog
             // 
@@ -697,7 +751,7 @@ namespace SKAIChips_Verification_Tool.RegisterControl
             panelTestLog.Dock = DockStyle.Fill;
             panelTestLog.Location = new Point(3, 3);
             panelTestLog.Name = "panelTestLog";
-            panelTestLog.Size = new Size(412, 377);
+            panelTestLog.Size = new Size(412, 374);
             panelTestLog.TabIndex = 24;
             // 
             // rtbRunTestLog
@@ -709,7 +763,7 @@ namespace SKAIChips_Verification_Tool.RegisterControl
             rtbRunTestLog.Location = new Point(0, 0);
             rtbRunTestLog.Name = "rtbRunTestLog";
             rtbRunTestLog.ReadOnly = true;
-            rtbRunTestLog.Size = new Size(412, 377);
+            rtbRunTestLog.Size = new Size(412, 374);
             rtbRunTestLog.TabIndex = 4;
             rtbRunTestLog.Text = "";
             // 
@@ -831,6 +885,7 @@ namespace SKAIChips_Verification_Tool.RegisterControl
             cmbTestCategory.Name = "cmbTestCategory";
             cmbTestCategory.Size = new Size(79, 23);
             cmbTestCategory.TabIndex = 0;
+            cmbTestCategory.SelectedIndexChanged += comboTestCategory_SelectedIndexChanged;
             // 
             // cmbTest
             // 
@@ -842,21 +897,25 @@ namespace SKAIChips_Verification_Tool.RegisterControl
             // 
             // btnRunTest
             // 
+            btnRunTest.Enabled = false;
             btnRunTest.Location = new Point(218, 3);
             btnRunTest.Name = "btnRunTest";
             btnRunTest.Size = new Size(73, 23);
             btnRunTest.TabIndex = 2;
             btnRunTest.Text = "Run Test";
             btnRunTest.UseVisualStyleBackColor = true;
+            btnRunTest.Click += btnRunTest_Click;
             // 
             // btnStopTest
             // 
+            btnStopTest.Enabled = false;
             btnStopTest.Location = new Point(297, 3);
             btnStopTest.Name = "btnStopTest";
             btnStopTest.Size = new Size(64, 23);
             btnStopTest.TabIndex = 3;
             btnStopTest.Text = "Stop";
             btnStopTest.UseVisualStyleBackColor = true;
+            btnStopTest.Click += btnStopTest_Click;
             // 
             // btnTestSlot01
             // 
@@ -925,6 +984,7 @@ namespace SKAIChips_Verification_Tool.RegisterControl
             grpRegMap.ResumeLayout(false);
             tlpRegMap.ResumeLayout(false);
             pnlRegMapButtons.ResumeLayout(false);
+            pnlRegMapButtons.PerformLayout();
             grpRegControl.ResumeLayout(false);
             grpRegControl.PerformLayout();
             ((System.ComponentModel.ISupportInitialize)numRegIndex).EndInit();
@@ -945,30 +1005,5 @@ namespace SKAIChips_Verification_Tool.RegisterControl
             pnlRunTestButtons.ResumeLayout(false);
             ResumeLayout(false);
         }
-
-        private SplitContainer splMain;
-        private TableLayoutPanel tlpLeft;
-        private TableLayoutPanel tlpRight;
-        private Button btnTestSlot05;
-        private Button btnTestSlot03;
-        private Button btnTestSlot02;
-        private Button btnTestSlot01;
-        private Button btnTestSlot04;
-        private TableLayoutPanel tlpRegTree;
-        private Panel pnlScriptButtons;
-        private TableLayoutPanel tlpRegMap;
-        private Panel pnlRegMapButtons;
-        private TableLayoutPanel tlpRunTest;
-        private Panel pnlRunTestButtons;
-        private Button btnTestSlot06;
-        private Button btnTestSlot07;
-        private Button btnTestSlot08;
-        private Button btnTestSlot09;
-        private Button btnTestSlot10;
-        private RichTextBox rtbRunTestLog;
-        private Label lblSelectedProject;
-        private ProgressBar probarRuntest;
-        private Panel panelProgress;
-        private Panel panelTestLog;
     }
 }

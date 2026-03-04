@@ -1,16 +1,11 @@
 using System.Diagnostics;
 using System.Globalization;
 using System.Runtime.InteropServices;
-using Excel = Microsoft.Office.Interop.Excel;
 
 namespace SKAIChips_Verification_Tool.RegisterControl
 {
     public partial class RegisterControlForm : Form, ITestUiContext
     {
-        private Excel.Application? _excelApp;
-        private Excel.Workbook? _excelWb;
-        private ExcelWriter? _xl;
-
         private II2cBus? _i2cBus;
         private ISpiBus? _spiBus;
         private IRegisterChip? _chip;
@@ -20,6 +15,7 @@ namespace SKAIChips_Verification_Tool.RegisterControl
 
         private readonly List<IChipProject> _projects = new();
         private IChipProject? _selectedProject;
+        private readonly List<Process> _openedExcelProcesses = new();
 
         private string? _regMapFilePath;
         private readonly List<RegisterGroup> _groups = new();
@@ -62,18 +58,28 @@ namespace SKAIChips_Verification_Tool.RegisterControl
         protected override void OnFormClosed(FormClosedEventArgs e)
         {
             base.OnFormClosed(e);
-
             try
             {
                 _testCts?.Cancel();
-                _xl?.Close();
             }
             catch { }
-
             DisconnectBus();
-            _xl = null;
 
-            CloseRegMapExcel();
+            foreach (var p in _openedExcelProcesses)
+            {
+                try
+                {
+                    if (!p.HasExited)
+                    {
+                        p.CloseMainWindow();
+                        p.WaitForExit(500);
+                        if (!p.HasExited)
+                            p.Kill();
+                    }
+                }
+                catch { }
+            }
+            _openedExcelProcesses.Clear();
         }
 
         private void InitUi()
@@ -93,153 +99,6 @@ namespace SKAIChips_Verification_Tool.RegisterControl
 
             tvRegTree.HideSelection = false;
             tvRegTree.MouseDown += TvRegTree_MouseDown;
-        }
-
-        private void InitLogGrid()
-        {
-            dgvRegLog.Rows.Clear();
-
-            dgvRegLog.RowHeadersVisible = false;
-
-            dgvRegLog.AutoSizeColumnsMode = DataGridViewAutoSizeColumnsMode.DisplayedCells;
-
-            if (dgvRegLog.Columns.Contains("colRegLogResult"))
-            {
-                dgvRegLog.Columns["colRegLogResult"].AutoSizeMode = DataGridViewAutoSizeColumnMode.Fill;
-            }
-        }
-
-        private void InitTreeContextMenu()
-        {
-            var ctx = new ContextMenuStrip();
-            var mExpand = new ToolStripMenuItem("모두 펼치기");
-            var mCollapse = new ToolStripMenuItem("모두 접기");
-            var mSearch = new ToolStripMenuItem("검색...");
-
-            mExpand.Click += (s, e) => tvRegTree.ExpandAll();
-            mCollapse.Click += (s, e) => tvRegTree.CollapseAll();
-            mSearch.Click += (s, e) => ShowTreeSearchDialog();
-
-            ctx.Items.Add(mExpand);
-            ctx.Items.Add(mCollapse);
-            ctx.Items.Add(new ToolStripSeparator());
-            ctx.Items.Add(mSearch);
-            tvRegTree.ContextMenuStrip = ctx;
-        }
-
-        private void InitBitButtons()
-        {
-            flpBitsTop.Controls.Clear();
-            flpBitsBottom.Controls.Clear();
-
-            for (int i = 0; i < 32; i++)
-            {
-                int indexInRow = (i < 16) ? i : i - 16;
-                int leftMargin = (indexInRow > 0 && indexInRow % 4 == 0) ? 5 : 1;
-
-                var btn = new Button
-                {
-                    Margin = new Padding(leftMargin, 1, 1, 1),
-                    Padding = new Padding(0),
-                    Width = 24,
-                    Height = 25,
-                    Text = "0",
-                    Tag = i,
-                    FlatStyle = FlatStyle.Flat
-                };
-
-                btn.FlatAppearance.BorderSize = 1;
-                btn.UseVisualStyleBackColor = false;
-                btn.BackColor = Color.WhiteSmoke;
-                btn.ForeColor = Color.Black;
-                btn.FlatAppearance.MouseOverBackColor = Color.SkyBlue;
-                btn.FlatAppearance.MouseDownBackColor = Color.Gainsboro;
-
-                btn.Click += BitButton_Click;
-
-                _bitButtons[i] = btn;
-
-                UpdateBitButtonVisual(btn);
-
-                if (i < 16)
-                    flpBitsTop.Controls.Add(btn);
-                else
-                    flpBitsBottom.Controls.Add(btn);
-            }
-
-            UpdateBitButtonsFromValue(_currentRegValue);
-            UpdateBitButtonLayout();
-        }
-
-        private void InitBitButtonLayoutHandlers()
-        {
-            flpBitsTop.SizeChanged += (s, e) => UpdateBitButtonLayout();
-            flpBitsBottom.SizeChanged += (s, e) => UpdateBitButtonLayout();
-            grpRegControl.Resize += (s, e) => UpdateBitButtonLayout();
-        }
-
-        private void UpdateBitButtonLayout()
-        {
-            int cols = 16;
-            const int groupSpacing = 5;
-
-            if (flpBitsTop.ClientSize.Width > 0)
-            {
-                int panelWidth = flpBitsTop.ClientSize.Width;
-
-                int btnWidth = (panelWidth - (cols + 1) * 2 - groupSpacing * 3) / cols;
-                if (btnWidth < 16)
-                    btnWidth = 16;
-                if (btnWidth > 40)
-                    btnWidth = 40;
-                int btnHeight = 25;
-
-                for (int i = 0; i < 16; i++)
-                {
-                    var btn = _bitButtons[i];
-                    if (btn == null)
-                        continue;
-                    btn.Width = btnWidth;
-                    btn.Height = btnHeight;
-                }
-            }
-
-            if (flpBitsBottom.ClientSize.Width > 0)
-            {
-                int panelWidth = flpBitsBottom.ClientSize.Width;
-
-                int btnWidth = (panelWidth - (cols + 1) * 2 - groupSpacing * 3) / cols;
-                if (btnWidth < 16)
-                    btnWidth = 16;
-                if (btnWidth > 40)
-                    btnWidth = 40;
-                int btnHeight = 25;
-
-                for (int i = 16; i < 32; i++)
-                {
-                    var btn = _bitButtons[i];
-                    if (btn == null)
-                        continue;
-                    btn.Width = btnWidth;
-                    btn.Height = btnHeight;
-                }
-            }
-        }
-
-        private void UpdateBitButtonVisual(Button btn)
-        {
-            bool isOne = btn.Text == "1";
-
-            if (btn.Enabled)
-            {
-                btn.BackColor = isOne ? Color.LightSkyBlue : Color.WhiteSmoke;
-                btn.ForeColor = Color.Black;
-            }
-            else
-            {
-                btn.BackColor = isOne ? Color.SteelBlue : Color.DarkGray;
-                btn.ForeColor = Color.Gainsboro;
-            }
         }
 
         private void InitRegisterMapControls()
@@ -300,91 +159,6 @@ namespace SKAIChips_Verification_Tool.RegisterControl
             btnStopTest.Click += btnStopTest_Click;
         }
 
-        private void TvRegTree_MouseDown(object? sender, MouseEventArgs e)
-        {
-            if (e.Button != MouseButtons.Left)
-                return;
-
-            var hitTest = tvRegTree.HitTest(e.Location);
-
-            if (hitTest.Node == null ||
-                (hitTest.Location != TreeViewHitTestLocations.Label &&
-                 hitTest.Location != TreeViewHitTestLocations.Image &&
-                 hitTest.Location != TreeViewHitTestLocations.StateImage))
-            {
-                return;
-            }
-
-            TreeNode clickedNode = hitTest.Node;
-
-            if (tvRegTree.SelectedNode != clickedNode)
-            {
-                tvRegTree.SelectedNode = clickedNode;
-            }
-
-            Keys modifier = Control.ModifierKeys;
-
-            tvRegTree.BeginUpdate();
-
-            if (modifier == Keys.Control)
-            {
-                ToggleSelection(clickedNode);
-                _pivotNode = clickedNode;
-            }
-            else if (modifier == Keys.Shift)
-            {
-                if (_pivotNode == null)
-                    _pivotNode = clickedNode;
-                ClearSelection();
-                SelectRange(_pivotNode, clickedNode);
-            }
-            else
-            {
-                ClearSelection();
-                AddSelection(clickedNode);
-                _pivotNode = clickedNode;
-            }
-
-            tvRegTree.EndUpdate();
-        }
-
-        private void AddSelection(TreeNode node)
-        {
-            if (!_selectedNodes.Contains(node))
-            {
-                _selectedNodes.Add(node);
-                UpdateNodeVisual(node, true);
-            }
-        }
-
-        private void RemoveSelection(TreeNode node)
-        {
-            if (_selectedNodes.Contains(node))
-            {
-                _selectedNodes.Remove(node);
-                UpdateNodeVisual(node, false);
-            }
-        }
-
-        private void ToggleSelection(TreeNode node)
-        {
-            if (_selectedNodes.Contains(node))
-                RemoveSelection(node);
-            else
-                AddSelection(node);
-        }
-
-        private void ClearSelection()
-        {
-            var oldNodes = _selectedNodes.ToList();
-            _selectedNodes.Clear();
-
-            foreach (var node in oldNodes)
-            {
-                UpdateNodeVisual(node, false);
-            }
-        }
-
         private void UpdateNodeVisual(TreeNode node, bool isSelected)
         {
             if (node == null)
@@ -404,68 +178,6 @@ namespace SKAIChips_Verification_Tool.RegisterControl
             foreach (TreeNode child in node.Nodes)
             {
                 RefreshNodeStyle(child);
-            }
-        }
-
-        private void RefreshNodeStyle(TreeNode node)
-        {
-            if (node == null)
-                return;
-
-            bool isExplicitlySelected = _selectedNodes.Contains(node);
-
-            bool isRegisterWithSelectedBit = (node.Tag is RegisterDetail) &&
-                                             node.Nodes.Cast<TreeNode>().Any(c => _selectedNodes.Contains(c));
-
-            bool hasSelectedParent = node.Parent != null && _selectedNodes.Contains(node.Parent);
-
-            bool isBitWithSelectedSibling = (node.Tag is RegisterItem) &&
-                                            node.Parent != null &&
-                                            node.Parent.Nodes.Cast<TreeNode>().Any(c => _selectedNodes.Contains(c));
-
-            if (isExplicitlySelected)
-            {
-                node.BackColor = SystemColors.Highlight;
-                node.ForeColor = SystemColors.HighlightText;
-            }
-            else if (isRegisterWithSelectedBit || hasSelectedParent || isBitWithSelectedSibling)
-            {
-                node.BackColor = Color.LightSkyBlue;
-                node.ForeColor = Color.Black;
-            }
-            else
-            {
-                node.BackColor = Color.Empty;
-                node.ForeColor = Color.Black;
-            }
-        }
-
-        private void SelectRange(TreeNode startNode, TreeNode endNode)
-        {
-            TreeNode? curr = tvRegTree.Nodes.Count > 0 ? tvRegTree.Nodes[0] : null;
-            bool inRange = false;
-
-            while (curr != null)
-            {
-                bool isBoundary = (curr == startNode || curr == endNode);
-
-                if (isBoundary)
-                {
-                    if (!inRange)
-                        inRange = true;
-                    else
-                    {
-                        AddSelection(curr);
-                        break;
-                    }
-                }
-
-                if (inRange || isBoundary)
-                {
-                    AddSelection(curr);
-                }
-
-                curr = curr.NextVisibleNode;
             }
         }
 
@@ -496,80 +208,6 @@ namespace SKAIChips_Verification_Tool.RegisterControl
         private string GetCurrentProjectName()
         {
             return _selectedProject?.Name ?? "UnknownProject";
-        }
-
-        private void InitTestLogContextMenu()
-        {
-            var ctx = new ContextMenuStrip();
-
-            var miSave = new ToolStripMenuItem("Save as .txt");
-            miSave.Click += TestLog_SaveAsTxt_Click;
-
-            var miClear = new ToolStripMenuItem("Clear");
-            miClear.Click += TestLog_Clear_Click;
-
-            var miSelectAll = new ToolStripMenuItem("Select All");
-            miSelectAll.Click += TestLog_SelectAll_Click;
-
-            var miCopy = new ToolStripMenuItem("Copy");
-            miCopy.Click += TestLog_Copy_Click;
-
-            ctx.Items.Add(miSave);
-            ctx.Items.Add(new ToolStripSeparator());
-            ctx.Items.Add(miClear);
-            ctx.Items.Add(new ToolStripSeparator());
-            ctx.Items.Add(miSelectAll);
-            ctx.Items.Add(miCopy);
-
-            rtbRunTestLog.ContextMenuStrip = ctx;
-        }
-
-        private void TestLog_SaveAsTxt_Click(object? sender, EventArgs e)
-        {
-            using (var sfd = new SaveFileDialog())
-            {
-                sfd.Filter = "Text File (*.txt)|*.txt|All Files (*.*)|*.*";
-                sfd.FileName = $"{GetCurrentProjectName()}_RunTestLog.txt";
-
-                if (sfd.ShowDialog(this) != DialogResult.OK)
-                    return;
-
-                File.WriteAllText(sfd.FileName, rtbRunTestLog.Text);
-            }
-        }
-
-        private void TestLog_Clear_Click(object? sender, EventArgs e)
-        {
-            rtbRunTestLog.Clear();
-        }
-
-        private void TestLog_SelectAll_Click(object? sender, EventArgs e)
-        {
-            rtbRunTestLog.SelectAll();
-        }
-
-        private void TestLog_Copy_Click(object? sender, EventArgs e)
-        {
-            if (rtbRunTestLog.SelectionLength > 0)
-                rtbRunTestLog.Copy();
-        }
-
-        public void UpdateTestProgress(int percent)
-        {
-            if (this.InvokeRequired)
-            {
-                this.BeginInvoke(new Action<int>(UpdateTestProgress), percent);
-                return;
-            }
-
-            if (probarRuntest != null)
-            {
-                if (percent < 0)
-                    percent = 0;
-                if (percent > 100)
-                    percent = 100;
-                probarRuntest.Value = percent;
-            }
         }
 
         private void InitializeTestSlotButtons()
@@ -878,158 +516,6 @@ namespace SKAIChips_Verification_Tool.RegisterControl
                 text = text.Substring(2);
 
             return uint.TryParse(text, NumberStyles.HexNumber, CultureInfo.InvariantCulture, out value);
-        }
-
-        private void OpenOrAttachWorkbook(string path, bool visible = true, bool readOnly = true)
-        {
-            path = Path.GetFullPath(path);
-
-            _excelApp ??= GetOrCreateExcelApp();
-            _excelApp.Visible = visible;
-
-            if (_excelWb != null)
-            {
-                try
-                {
-                    if (string.Equals(Path.GetFullPath(_excelWb.FullName), path, StringComparison.OrdinalIgnoreCase))
-                        return;
-                }
-                catch { }
-            }
-
-            foreach (Excel.Workbook wb in _excelApp.Workbooks)
-            {
-                if (string.Equals(Path.GetFullPath(wb.FullName), path, StringComparison.OrdinalIgnoreCase))
-                {
-                    _excelWb = wb;
-                    return;
-                }
-                ReleaseCom(wb);
-            }
-
-            _excelWb = _excelApp.Workbooks.Open(path, ReadOnly: readOnly);
-        }
-
-        private List<string> GetWorksheetNames()
-        {
-            if (_excelWb == null)
-                return new List<string>();
-
-            var names = new List<string>();
-            foreach (Excel.Worksheet ws in _excelWb.Worksheets)
-            {
-                names.Add(ws.Name);
-                ReleaseCom(ws);
-            }
-            return names;
-        }
-
-        private string[,] ReadWorksheetToStringArray(string sheetName)
-        {
-            var ws = (Excel.Worksheet)_excelWb.Worksheets[sheetName];
-
-            var lastCell = ws.Cells.Find(
-                What: "*",
-                LookIn: Excel.XlFindLookIn.xlFormulas,
-                LookAt: Excel.XlLookAt.xlPart,
-                SearchOrder: Excel.XlSearchOrder.xlByRows,
-                SearchDirection: Excel.XlSearchDirection.xlPrevious,
-                MatchCase: false);
-
-            if (lastCell == null)
-            {
-                ReleaseCom(ws);
-                return new string[0, 0];
-            }
-
-            int lastRow = lastCell.Row;
-            int lastCol = lastCell.Column;
-
-            var start = (Excel.Range)ws.Cells[1, 1];
-            var end = (Excel.Range)ws.Cells[lastRow, lastCol];
-            var rng = ws.Range[start, end];
-
-            object value2 = rng.Value2;
-
-            ReleaseCom(rng);
-            ReleaseCom(end);
-            ReleaseCom(start);
-            ReleaseCom(lastCell);
-            ReleaseCom(ws);
-
-            return ExcelDataConverter.ToStringArrayFromValue2(value2);
-        }
-
-        private static Excel.Application GetOrCreateExcelApp()
-        {
-            try
-            {
-                var app = ComActiveObject.TryGet<Excel.Application>("Excel.Application");
-                return app ?? new Excel.Application();
-            }
-            catch { return new Excel.Application(); }
-        }
-
-        private static void ReleaseCom(object o)
-        {
-            if (o != null && Marshal.IsComObject(o))
-                Marshal.ReleaseComObject(o);
-        }
-
-        private void AddLog(string type, string addrText, string dataText, string result)
-        {
-            if (dgvRegLog.Rows.Count > 1000)
-            {
-                dgvRegLog.Rows.RemoveAt(0);
-            }
-
-            int rowIndex = dgvRegLog.Rows.Add();
-            var row = dgvRegLog.Rows[rowIndex];
-
-            row.Cells["colRegLogTime"].Value = DateTime.Now.ToString("HH:mm:ss");
-            row.Cells["colRegLogType"].Value = type;
-            row.Cells["colRegLogAddr"].Value = addrText;
-            row.Cells["colRegLogData"].Value = dataText;
-            row.Cells["colRegLogResult"].Value = result;
-
-            dgvRegLog.FirstDisplayedScrollingRowIndex = rowIndex;
-        }
-
-        public void AddTestLogRow(string level, string message)
-        {
-            if (rtbRunTestLog.Lines.Length > 5000)
-            {
-                rtbRunTestLog.ReadOnly = false;
-                rtbRunTestLog.Select(0, rtbRunTestLog.GetFirstCharIndexFromLine(1000));
-                rtbRunTestLog.SelectedText = "";
-                rtbRunTestLog.ReadOnly = true;
-            }
-
-            string line = $"[{DateTime.Now:HH:mm:ss}] [{level}] {message}";
-            rtbRunTestLog.AppendText(line + Environment.NewLine);
-            rtbRunTestLog.SelectionStart = rtbRunTestLog.TextLength;
-            rtbRunTestLog.ScrollToCaret();
-        }
-
-        public void AppendLog(string message)
-        {
-            if (this.InvokeRequired)
-            {
-                this.Invoke(new Action<string>(AppendLog), message);
-                return;
-            }
-
-            try
-            {
-                string timestamp = DateTime.Now.ToString("HH:mm:ss");
-                string logMsg = $"[{timestamp}] {message}\r\n";
-
-                rtbRunTestLog.AppendText(logMsg);
-
-                rtbRunTestLog.SelectionStart = rtbRunTestLog.Text.Length;
-                rtbRunTestLog.ScrollToCaret();
-            }
-            catch { }
         }
 
         private static DeviceKind ResolveDeviceKind(FtdiDeviceSettings s)
@@ -1475,7 +961,7 @@ namespace SKAIChips_Verification_Tool.RegisterControl
             }
         }
 
-        private void btnSelectMapFile_Click(object sender, EventArgs e)
+        private async void btnSelectMapFile_Click(object sender, EventArgs e)
         {
             using (var ofd = new OpenFileDialog())
             {
@@ -1493,10 +979,37 @@ namespace SKAIChips_Verification_Tool.RegisterControl
                     clbRegMapSheets.Items.Clear();
                     AutoSelectProjectFromRegMapFile();
 
-                    _xl ??= new ExcelWriter();
-                    _xl.OpenOrAttach(_regMapFilePath, visible: true, readOnly: true, createIfMissing: false);
+                    try
+                    {
+                        ProcessStartInfo psi = new ProcessStartInfo
+                        {
+                            FileName = "excel.exe",
+                            Arguments = $"/x /r \"{_regMapFilePath}\"",
+                            UseShellExecute = true
+                        };
 
-                    foreach (var name in _xl.GetSheetNames())
+                        Process? excelProcess = Process.Start(psi);
+                        if (excelProcess != null)
+                        {
+                            _openedExcelProcesses.Add(excelProcess);
+
+                            if (chkAutoArrange.Checked)
+                            {
+                                ArrangeWindowsSideBySide(excelProcess);
+                            }
+                        }
+                    }
+                    catch (Exception)
+                    {
+                        try
+                        {
+                            Process.Start(new ProcessStartInfo(_regMapFilePath) { UseShellExecute = true });
+                        }
+                        catch { }
+                    }
+
+                    var sheetNames = ExcelReader.GetSheetNames(_regMapFilePath);
+                    foreach (var name in sheetNames)
                         clbRegMapSheets.Items.Add(name, false);
 
                     _groups.Clear();
@@ -1511,47 +1024,6 @@ namespace SKAIChips_Verification_Tool.RegisterControl
                     MessageBox.Show($"엑셀 파일을 여는 중 오류가 발생했습니다:\n{ex.Message}", "엑셀 열기 실패", MessageBoxButtons.OK, MessageBoxIcon.Error);
                 }
             }
-        }
-
-        private void CloseRegMapExcel()
-        {
-            try
-            {
-                if (_excelWb != null)
-                {
-                    _excelWb.Saved = true;
-                    _excelWb.Close(false);
-                }
-            }
-            catch { }
-
-            try
-            {
-                if (_excelApp != null)
-                    _excelApp.Quit();
-            }
-            catch { }
-
-            try
-            {
-                if (_excelWb != null)
-                    Marshal.FinalReleaseComObject(_excelWb);
-            }
-            catch { }
-            try
-            {
-                if (_excelApp != null)
-                    Marshal.FinalReleaseComObject(_excelApp);
-            }
-            catch { }
-
-            _excelWb = null;
-            _excelApp = null;
-
-            GC.Collect();
-            GC.WaitForPendingFinalizers();
-            GC.Collect();
-            GC.WaitForPendingFinalizers();
         }
 
         private void btnLoadSelectedSheets_Click(object sender, EventArgs e)
@@ -1570,9 +1042,6 @@ namespace SKAIChips_Verification_Tool.RegisterControl
 
             try
             {
-                _xl ??= new ExcelWriter();
-                _xl.OpenOrAttach(_regMapFilePath, visible: true, readOnly: true, createIfMissing: false);
-
                 _groups.Clear();
                 _regValues.Clear();
 
@@ -1582,8 +1051,8 @@ namespace SKAIChips_Verification_Tool.RegisterControl
                     if (string.IsNullOrWhiteSpace(sheetName))
                         continue;
 
-                    var value2 = _xl.ReadUsedRangeValue2(sheetName);
-                    var data = (value2.Length == 0) ? new string[0, 0] : ExcelDataConverter.FromObjectMatrix(value2);
+                    var data = ExcelReader.ReadUsedRangeAsStringArray(_regMapFilePath, sheetName);
+
                     var group = RegisterMapParser.MakeRegisterGroup(sheetName, data);
                     _groups.Add(group);
                 }
@@ -2454,56 +1923,6 @@ namespace SKAIChips_Verification_Tool.RegisterControl
             btnStopTest.Enabled = false;
         }
 
-        public static class Prompt
-        {
-            public static string ShowDialog(string text, string caption)
-            {
-                Form prompt = new Form()
-                {
-                    Width = 360,
-                    Height = 150,
-                    Text = caption,
-                    FormBorderStyle = FormBorderStyle.FixedDialog,
-                    StartPosition = FormStartPosition.CenterParent
-                };
-
-                Label label = new Label() { Left = 20, Top = 20, Text = text, Width = 300 };
-                TextBox textBox = new TextBox() { Left = 20, Top = 50, Width = 300 };
-                Button buttonOk = new Button() { Text = "OK", Left = 240, Width = 80, Top = 80 };
-
-                buttonOk.Click += (sender, e) => { prompt.DialogResult = DialogResult.OK; prompt.Close(); };
-
-                prompt.Controls.Add(label);
-                prompt.Controls.Add(textBox);
-                prompt.Controls.Add(buttonOk);
-                prompt.AcceptButton = buttonOk;
-
-                return prompt.ShowDialog() == DialogResult.OK ? textBox.Text : "";
-            }
-        }
-
-        internal static class ComActiveObject
-        {
-            [DllImport("oleaut32.dll", PreserveSig = true)]
-            private static extern int GetActiveObject(ref Guid rclsid, IntPtr reserved,
-                [MarshalAs(UnmanagedType.Interface)] out object ppunk);
-
-            public static T? TryGet<T>(string progId) where T : class
-            {
-                var type = Type.GetTypeFromProgID(progId, throwOnError: false);
-                if (type == null)
-                    return null;
-
-                var clsid = type.GUID;
-
-                var hr = GetActiveObject(ref clsid, IntPtr.Zero, out var obj);
-                if (hr != 0)
-                    return null;
-
-                return obj as T;
-            }
-        }
-
         public string? OpenFileDialog(string filter, string title)
         {
             using var ofd = new OpenFileDialog { Filter = filter, Title = title };
@@ -2513,6 +1932,75 @@ namespace SKAIChips_Verification_Tool.RegisterControl
         public string? PromptInput(string title, string label, string defaultValue)
         {
             return PromptText(title, label, defaultValue);
+        }
+
+        [DllImport("user32.dll")]
+        private static extern bool SetForegroundWindow(IntPtr hWnd);
+
+        [DllImport("user32.dll")]
+        private static extern void keybd_event(byte bVk, byte bScan, uint dwFlags, int dwExtraInfo);
+
+        private const byte VK_LWIN = 0x5B; private const byte VK_LEFT = 0x25; private const byte VK_RIGHT = 0x27; private const uint KEYEVENTF_KEYUP = 0x0002;
+        private void SnapWindow(IntPtr hWnd, byte directionKey)
+        {
+            SetForegroundWindow(hWnd);
+            System.Threading.Thread.Sleep(100);
+            keybd_event(VK_LWIN, 0, 0, 0);
+            keybd_event(directionKey, 0, 0, 0);
+
+            keybd_event(directionKey, 0, KEYEVENTF_KEYUP, 0);
+            keybd_event(VK_LWIN, 0, KEYEVENTF_KEYUP, 0);
+        }
+
+        private async void ArrangeWindowsSideBySide(Process excelProcess)
+        {
+            try
+            {
+                Form mainWindow = this.TopLevelControl as Form
+                  ?? Application.OpenForms["MainForm"]
+                  ?? this;
+
+                if (mainWindow.InvokeRequired)
+                {
+                    mainWindow.Invoke(new Action(() =>
+                    {
+                        if (mainWindow.WindowState == FormWindowState.Minimized)
+                            mainWindow.WindowState = FormWindowState.Normal;
+                        SnapWindow(mainWindow.Handle, VK_RIGHT);
+                    }));
+                }
+                else
+                {
+                    if (mainWindow.WindowState == FormWindowState.Minimized)
+                        mainWindow.WindowState = FormWindowState.Normal;
+                    SnapWindow(mainWindow.Handle, VK_RIGHT);
+                }
+
+                IntPtr excelHandle = IntPtr.Zero;
+                for (int i = 0; i < 30; i++)
+                {
+                    if (excelProcess.HasExited)
+                        return;
+
+                    excelProcess.Refresh();
+                    if (excelProcess.MainWindowHandle != IntPtr.Zero)
+                    {
+                        excelHandle = excelProcess.MainWindowHandle;
+                        break;
+                    }
+                    await Task.Delay(100);
+                }
+
+                if (excelHandle != IntPtr.Zero)
+                {
+                    await Task.Delay(200);
+                    SnapWindow(excelHandle, VK_LEFT);
+                }
+            }
+            catch (Exception ex)
+            {
+                Debug.WriteLine($"[Aero Snap Error] {ex.Message}");
+            }
         }
     }
 }

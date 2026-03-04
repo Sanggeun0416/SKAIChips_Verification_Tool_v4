@@ -49,79 +49,80 @@ namespace SKAIChips_Verification_Tool.RegisterControl
                 catch { }
             }
 
-            Excel.Workbook found = null;
-
-            foreach (Excel.Workbook wb in _app.Workbooks)
+            Excel.Workbooks workbooks = null;
+            try
             {
-                try
+                workbooks = _app.Workbooks;
+                Excel.Workbook found = null;
+
+                foreach (Excel.Workbook wb in workbooks)
                 {
-                    if (string.Equals(Path.GetFullPath(wb.FullName), workbookPath, StringComparison.OrdinalIgnoreCase))
+                    try
                     {
-                        found = wb;
-                        break;
+                        if (string.Equals(Path.GetFullPath(wb.FullName), workbookPath, StringComparison.OrdinalIgnoreCase))
+                        {
+                            found = wb;
+                            break;
+                        }
                     }
+                    catch { ReleaseCom(wb); }
                 }
-                catch
+
+                if (found != null)
                 {
-                    ReleaseCom(wb);
+                    _wb = found;
+                    return;
                 }
-            }
 
-            if (found != null)
+                if (!File.Exists(workbookPath))
+                {
+                    if (!createIfMissing)
+                        throw new FileNotFoundException("Workbook not found.", workbookPath);
+
+                    var dir = Path.GetDirectoryName(workbookPath);
+                    if (!string.IsNullOrWhiteSpace(dir))
+                        Directory.CreateDirectory(dir);
+
+                    _wb = workbooks.Add();
+                    _wb.SaveAs(workbookPath);
+                    return;
+                }
+
+                _wb = workbooks.Open(workbookPath, ReadOnly: readOnly);
+            }
+            finally
             {
-                _wb = found;
-                return;
+                ReleaseCom(workbooks);
             }
-
-            if (!File.Exists(workbookPath))
-            {
-                if (!createIfMissing)
-                    throw new FileNotFoundException("Workbook not found.", workbookPath);
-
-                var dir = Path.GetDirectoryName(workbookPath);
-                if (!string.IsNullOrWhiteSpace(dir))
-                    Directory.CreateDirectory(dir);
-
-                var newWb = _app.Workbooks.Add();
-                newWb.SaveAs(workbookPath);
-                _wb = newWb;
-                return;
-            }
-
-            _wb = _app.Workbooks.Open(workbookPath, ReadOnly: readOnly);
         }
-
-        // [ExcelWriter.cs] 파일의 ExcelWriter 클래스 내부에 추가
 
         public void Close()
         {
-            // 1. 워크북 닫기
             if (_wb != null)
             {
                 try
                 {
-                    _wb.Saved = true; // 저장 여부 묻지 않음 (변경사항 무시)
-                    _wb.Close(false); // 닫기
+                    _wb.Saved = true;
+                    _wb.Close(false);
                 }
                 catch { }
                 ReleaseCom(_wb);
                 _wb = null;
             }
 
-            // 2. 엑셀 애플리케이션 종료
             if (_app != null)
             {
                 try
                 {
-                    _app.Quit(); // 엑셀 프로세스 종료
+                    _app.Quit();
                 }
                 catch { }
                 ReleaseCom(_app);
                 _app = null;
             }
 
-            // 3. 나머지 리소스 정리 (Dispose 로직과 중복 방지)
-            Dispose();
+            GC.Collect();
+            GC.WaitForPendingFinalizers();
         }
 
         public List<string> GetSheetNames()
@@ -400,8 +401,6 @@ namespace SKAIChips_Verification_Tool.RegisterControl
                 ws = (Excel.Worksheet)_wb.Worksheets[sheetName];
                 cell = (Excel.Range)ws.Cells[row, col];
 
-                // Application.Goto 메서드는 해당 Range를 선택하고 화면을 스크롤합니다.
-                // Scroll: true -> 해당 셀이 좌측 상단에 오도록 스크롤
                 _app.Goto(cell, false);
             }
             catch
@@ -482,8 +481,7 @@ namespace SKAIChips_Verification_Tool.RegisterControl
             try
             {
                 ws = (Excel.Worksheet)_wb.Worksheets[sheetName];
-                rng = ws.Cells; // 시트 전체
-
+                rng = ws.Cells;
                 if (!string.IsNullOrWhiteSpace(fontName))
                     rng.Font.Name = fontName;
 
@@ -794,8 +792,12 @@ namespace SKAIChips_Verification_Tool.RegisterControl
 
         private static void ReleaseCom(object o)
         {
-            if (o != null && Marshal.IsComObject(o))
-                Marshal.ReleaseComObject(o);
+            try
+            {
+                if (o != null && Marshal.IsComObject(o))
+                    Marshal.FinalReleaseComObject(o);
+            }
+            catch { }
         }
     }
 }
