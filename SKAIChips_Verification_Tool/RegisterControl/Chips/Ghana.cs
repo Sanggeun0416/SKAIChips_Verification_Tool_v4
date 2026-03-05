@@ -11,6 +11,8 @@
 
         public override IEnumerable<ProtocolRegLogType> SupportedProtocols => new[] { ProtocolRegLogType.SPI };
 
+        public override uint ComFrequency => 1000;
+
         public Ghana()
         {
         }
