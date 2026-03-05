@@ -105,6 +105,7 @@ namespace SKAIChips_Verification_Tool.RegisterControl
         {
             lblMapFileName.Text = "(No file)";
             btnOpenMapPath.Enabled = false;
+            btnReloadMapFile.Enabled = false;
         }
 
         private void InitRegisterValueControls()
@@ -973,9 +974,16 @@ namespace SKAIChips_Verification_Tool.RegisterControl
                     if (ofd.ShowDialog() != DialogResult.OK)
                         return;
 
+                    if (string.Equals(_regMapFilePath, ofd.FileName, StringComparison.OrdinalIgnoreCase))
+                    {
+                        MessageBox.Show("이미 열려있는 레지스터 맵 파일입니다.", "알림", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                        return;
+                    }
+
                     _regMapFilePath = ofd.FileName;
                     lblMapFileName.Text = Path.GetFileName(_regMapFilePath);
                     btnOpenMapPath.Enabled = true;
+                    btnReloadMapFile.Enabled = true;
                     clbRegMapSheets.Items.Clear();
                     AutoSelectProjectFromRegMapFile();
 
@@ -993,10 +1001,7 @@ namespace SKAIChips_Verification_Tool.RegisterControl
                         {
                             _openedExcelProcesses.Add(excelProcess);
 
-                            if (chkAutoArrange.Checked)
-                            {
-                                ArrangeWindowsSideBySide(excelProcess);
-                            }
+                            CenterExcelWindow(excelProcess);
                         }
                     }
                     catch (Exception)
@@ -1083,6 +1088,57 @@ namespace SKAIChips_Verification_Tool.RegisterControl
             catch (Exception ex)
             {
                 MessageBox.Show("경로를 여는 중 오류가 발생했습니다: " + ex.Message);
+            }
+        }
+
+        private void btnReloadMapFile_Click(object sender, EventArgs e)
+        {
+            if (string.IsNullOrEmpty(_regMapFilePath) || !File.Exists(_regMapFilePath))
+            {
+                MessageBox.Show("다시 로드할 레지스터 맵 파일이 없습니다.", "알림", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                return;
+            }
+
+            foreach (var p in _openedExcelProcesses.ToList())
+            {
+                try
+                {
+                    if (!p.HasExited)
+                    {
+                        p.CloseMainWindow();
+                        p.WaitForExit(500);
+                        if (!p.HasExited)
+                            p.Kill();
+                    }
+                }
+                catch { }
+            }
+            _openedExcelProcesses.Clear();
+            try
+            {
+                ProcessStartInfo psi = new ProcessStartInfo
+                {
+                    FileName = "excel.exe",
+                    Arguments = $"/x /r \"{_regMapFilePath}\"",
+                    UseShellExecute = true
+                };
+
+                Process? excelProcess = Process.Start(psi);
+                if (excelProcess != null)
+                {
+                    _openedExcelProcesses.Add(excelProcess);
+
+                    CenterExcelWindow(excelProcess);
+                }
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show($"엑셀 파일을 다시 여는 중 오류가 발생했습니다:\n{ex.Message}", "엑셀 열기 실패", MessageBoxButtons.OK, MessageBoxIcon.Error);
+            }
+
+            if (clbRegMapSheets.CheckedItems.Count > 0)
+            {
+                btnLoadSelectedSheets_Click(sender, e);
             }
         }
 
@@ -1934,50 +1990,22 @@ namespace SKAIChips_Verification_Tool.RegisterControl
             return PromptText(title, label, defaultValue);
         }
 
+        [DllImport("user32.dll", SetLastError = true)]
+        internal static extern bool MoveWindow(IntPtr hWnd, int X, int Y, int nWidth, int nHeight, bool bRepaint);
+
         [DllImport("user32.dll")]
         private static extern bool SetForegroundWindow(IntPtr hWnd);
 
         [DllImport("user32.dll")]
-        private static extern void keybd_event(byte bVk, byte bScan, uint dwFlags, int dwExtraInfo);
+        private static extern bool ShowWindow(IntPtr hWnd, int nCmdShow);
+        private const int SW_RESTORE = 9;
 
-        private const byte VK_LWIN = 0x5B; private const byte VK_LEFT = 0x25; private const byte VK_RIGHT = 0x27; private const uint KEYEVENTF_KEYUP = 0x0002;
-        private void SnapWindow(IntPtr hWnd, byte directionKey)
-        {
-            SetForegroundWindow(hWnd);
-            System.Threading.Thread.Sleep(100);
-            keybd_event(VK_LWIN, 0, 0, 0);
-            keybd_event(directionKey, 0, 0, 0);
-
-            keybd_event(directionKey, 0, KEYEVENTF_KEYUP, 0);
-            keybd_event(VK_LWIN, 0, KEYEVENTF_KEYUP, 0);
-        }
-
-        private async void ArrangeWindowsSideBySide(Process excelProcess)
+        private async void CenterExcelWindow(Process excelProcess)
         {
             try
             {
-                Form mainWindow = this.TopLevelControl as Form
-                  ?? Application.OpenForms["MainForm"]
-                  ?? this;
-
-                if (mainWindow.InvokeRequired)
-                {
-                    mainWindow.Invoke(new Action(() =>
-                    {
-                        if (mainWindow.WindowState == FormWindowState.Minimized)
-                            mainWindow.WindowState = FormWindowState.Normal;
-                        SnapWindow(mainWindow.Handle, VK_RIGHT);
-                    }));
-                }
-                else
-                {
-                    if (mainWindow.WindowState == FormWindowState.Minimized)
-                        mainWindow.WindowState = FormWindowState.Normal;
-                    SnapWindow(mainWindow.Handle, VK_RIGHT);
-                }
-
                 IntPtr excelHandle = IntPtr.Zero;
-                for (int i = 0; i < 30; i++)
+                for (int i = 0; i < 100; i++)
                 {
                     if (excelProcess.HasExited)
                         return;
@@ -1993,13 +2021,28 @@ namespace SKAIChips_Verification_Tool.RegisterControl
 
                 if (excelHandle != IntPtr.Zero)
                 {
-                    await Task.Delay(200);
-                    SnapWindow(excelHandle, VK_LEFT);
+                    await Task.Delay(500);
+
+                    Form mainWindow = this.TopLevelControl as Form
+                        ?? Application.OpenForms["MainForm"]
+                        ?? this;
+                    Screen currentScreen = Screen.FromControl(mainWindow);
+                    Rectangle wa = currentScreen.WorkingArea;
+
+                    int w = (int)(wa.Width * 0.6);
+                    int h = (int)(wa.Height * 0.8);
+
+                    int x = wa.X + (wa.Width - w) / 2;
+                    int y = wa.Y + (wa.Height - h) / 2;
+
+                    ShowWindow(excelHandle, SW_RESTORE);
+                    SetForegroundWindow(excelHandle);
+                    MoveWindow(excelHandle, x, y, w, h, true);
                 }
             }
             catch (Exception ex)
             {
-                Debug.WriteLine($"[Aero Snap Error] {ex.Message}");
+                Debug.WriteLine($"[Center Excel Error] {ex.Message}");
             }
         }
     }

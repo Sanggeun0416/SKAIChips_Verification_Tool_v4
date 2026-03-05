@@ -19,7 +19,6 @@ namespace SKAIChips_Verification_Tool.RegisterControl
         private Button btnSelectMapFile;
         private CheckedListBox clbRegMapSheets;
         private Button btnLoadSelectedSheets;
-        private CheckBox chkAutoArrange;
         private TreeView tvRegTree;
         private Button btnSaveScript;
         private Button btnLoadScript;
@@ -119,9 +118,9 @@ namespace SKAIChips_Verification_Tool.RegisterControl
             grpRegMap = new GroupBox();
             tlpRegMap = new TableLayoutPanel();
             pnlRegMapButtons = new Panel();
+            btnReloadMapFile = new Button();
             btnOpenMapPath = new Button();
             lblMapFileName = new Label();
-            chkAutoArrange = new CheckBox();
             grpRegControl = new GroupBox();
             numRegIndex = new NumericUpDown();
             txtRegValueHex = new TextBox();
@@ -479,21 +478,32 @@ namespace SKAIChips_Verification_Tool.RegisterControl
             // 
             // pnlRegMapButtons
             // 
+            pnlRegMapButtons.Controls.Add(btnReloadMapFile);
             pnlRegMapButtons.Controls.Add(btnSelectMapFile);
             pnlRegMapButtons.Controls.Add(btnOpenMapPath);
             pnlRegMapButtons.Controls.Add(lblMapFileName);
             pnlRegMapButtons.Controls.Add(btnLoadSelectedSheets);
-            pnlRegMapButtons.Controls.Add(chkAutoArrange);
             pnlRegMapButtons.Dock = DockStyle.Fill;
             pnlRegMapButtons.Location = new Point(3, 77);
             pnlRegMapButtons.Name = "pnlRegMapButtons";
             pnlRegMapButtons.Size = new Size(352, 50);
             pnlRegMapButtons.TabIndex = 25;
             // 
+            // btnReloadMapFile
+            // 
+            btnReloadMapFile.Enabled = false;
+            btnReloadMapFile.Location = new Point(284, 25);
+            btnReloadMapFile.Name = "btnReloadMapFile";
+            btnReloadMapFile.Size = new Size(63, 23);
+            btnReloadMapFile.TabIndex = 27;
+            btnReloadMapFile.Text = "Reload";
+            btnReloadMapFile.UseVisualStyleBackColor = true;
+            btnReloadMapFile.Click += btnReloadMapFile_Click;
+            // 
             // btnOpenMapPath
             // 
             btnOpenMapPath.Enabled = false;
-            btnOpenMapPath.Location = new Point(297, 25);
+            btnOpenMapPath.Location = new Point(228, 25);
             btnOpenMapPath.Name = "btnOpenMapPath";
             btnOpenMapPath.Size = new Size(50, 23);
             btnOpenMapPath.TabIndex = 23;
@@ -505,21 +515,9 @@ namespace SKAIChips_Verification_Tool.RegisterControl
             // 
             lblMapFileName.Location = new Point(3, 29);
             lblMapFileName.Name = "lblMapFileName";
-            lblMapFileName.Size = new Size(297, 15);
+            lblMapFileName.Size = new Size(219, 15);
             lblMapFileName.TabIndex = 22;
             lblMapFileName.Text = "(No file)";
-            // 
-            // chkAutoArrange
-            // 
-            chkAutoArrange.AutoSize = true;
-            chkAutoArrange.Checked = true;
-            chkAutoArrange.CheckState = CheckState.Checked;
-            chkAutoArrange.Location = new Point(249, 6);
-            chkAutoArrange.Name = "chkAutoArrange";
-            chkAutoArrange.Size = new Size(98, 19);
-            chkAutoArrange.TabIndex = 26;
-            chkAutoArrange.Text = "Auto Arrange";
-            chkAutoArrange.UseVisualStyleBackColor = true;
             // 
             // grpRegControl
             // 
@@ -984,7 +982,6 @@ namespace SKAIChips_Verification_Tool.RegisterControl
             grpRegMap.ResumeLayout(false);
             tlpRegMap.ResumeLayout(false);
             pnlRegMapButtons.ResumeLayout(false);
-            pnlRegMapButtons.PerformLayout();
             grpRegControl.ResumeLayout(false);
             grpRegControl.PerformLayout();
             ((System.ComponentModel.ISupportInitialize)numRegIndex).EndInit();
@@ -1005,5 +1002,7 @@ namespace SKAIChips_Verification_Tool.RegisterControl
             pnlRunTestButtons.ResumeLayout(false);
             ResumeLayout(false);
         }
+
+        private Button btnReloadMapFile;
     }
 }
