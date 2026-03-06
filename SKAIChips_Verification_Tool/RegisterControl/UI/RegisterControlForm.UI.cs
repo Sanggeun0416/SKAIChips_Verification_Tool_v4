@@ -82,6 +82,7 @@
                 else
                     flpBitsBottom.Controls.Add(btn);
             }
+            UpdateBitButtonLayout();
         }
 
         private void InitBitButtonLayoutHandlers()
