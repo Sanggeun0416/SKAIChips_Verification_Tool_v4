@@ -243,19 +243,32 @@ namespace SKAIChips_Verification_Tool.RegisterControl
             return dr;
         }
 
-        protected IScpiClient? PowerSupply0 => InstrumentRegistry.Instance.GetByType("PowerSupply0");
-        protected IScpiClient? PowerSupply1 => InstrumentRegistry.Instance.GetByType("PowerSupply1");
-        protected IScpiClient? PowerSupply2 => InstrumentRegistry.Instance.GetByType("PowerSupply2");
-        protected IScpiClient? DigitalMultimeter0 => InstrumentRegistry.Instance.GetByType("DigitalMultimeter0");
-        protected IScpiClient? DigitalMultimeter1 => InstrumentRegistry.Instance.GetByType("DigitalMultimeter1");
-        protected IScpiClient? DigitalMultimeter2 => InstrumentRegistry.Instance.GetByType("DigitalMultimeter2");
-        protected IScpiClient? DigitalMultimeter3 => InstrumentRegistry.Instance.GetByType("DigitalMultimeter3");
-        protected IScpiClient? OscilloScope0 => InstrumentRegistry.Instance.GetByType("OscilloScope0");
-        protected IScpiClient? SpectrumAnalyzer => InstrumentRegistry.Instance.GetByType("SpectrumAnalyzer");
-        protected IScpiClient? TempChamber => InstrumentRegistry.Instance.GetByType("TempChamber");
-        protected IScpiClient? SignalGenerator0 => InstrumentRegistry.Instance.GetByType("SignalGenerator0");
-        protected IScpiClient? SignalGenerator1 => InstrumentRegistry.Instance.GetByType("SignalGenerator1");
-        protected IScpiClient? ElectronicLoad => InstrumentRegistry.Instance.GetByType("ElectronicLoad");
+        protected IScpiClient Inst(string instrumentName)
+        {
+            var inst = InstrumentRegistry.Instance.GetByType(instrumentName);
 
+            if (inst == null)
+                throw new InvalidOperationException($"장비 '{instrumentName}'가 연결되지 않았습니다. 테스트 시작 전 CheckInstruments를 호출했는지 확인하세요.");
+
+            return inst;
+        }
+
+        protected void CheckInstruments(params string[] instrumentNames)
+        {
+            var missingInstruments = new List<string>();
+
+            foreach (var name in instrumentNames)
+            {
+                if (InstrumentRegistry.Instance.GetByType(name) == null)
+                {
+                    missingInstruments.Add(name);
+                }
+            }
+
+            if (missingInstruments.Count > 0)
+            {
+                throw new InvalidOperationException($"테스트에 필요한 다음 장비가 연결/등록되지 않았습니다:\n{string.Join(", ", missingInstruments)}");
+            }
+        }
     }
 }

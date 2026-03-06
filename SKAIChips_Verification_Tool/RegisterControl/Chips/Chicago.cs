@@ -374,6 +374,8 @@ namespace SKAIChips_Verification_Tool.RegisterControl
             {
                 ct.ThrowIfCancellationRequested();
 
+                CheckInstruments("PowerSupply0", "DigitalMultimeter0");
+
                 string? sPins = Ui(() => _regCont.PromptText("SEG MEASURE", "총 Segment 개수(32/24/16)를 입력:", "16"));
                 if (string.IsNullOrWhiteSpace(sPins))
                     return;
@@ -402,7 +404,7 @@ namespace SKAIChips_Verification_Tool.RegisterControl
                     double sum = 0;
                     for (int i = 0; i < avgTime; i++)
                     {
-                        var s = DigitalMultimeter0?.Query("READ?");
+                        var s = Inst("DigitalMultimeter0").Query("READ?");
                         var a = double.Parse(s, CultureInfo.InvariantCulture);
                         sum += Math.Round(a * 1000.0, 5);
                     }
@@ -431,10 +433,10 @@ namespace SKAIChips_Verification_Tool.RegisterControl
 
                     string rowLabel = $"Chip{chipNoLocal}_Cyc{cycleLocal + 1}_{segLabel}";
 
-                    PowerSupply0?.Write("VOLT 5, (@1)");
-                    PowerSupply0?.Write("VOLT 0.6, (@2)");
-                    DigitalMultimeter0?.Write("CONF:CURR:DC 0.1A");
-                    PowerSupply0?.Write("OUTP ON, (@1:2)");
+                    Inst("PowerSupply0").Write("VOLT 5, (@1)");
+                    Inst("PowerSupply0").Write("VOLT 0.6, (@2)");
+                    Inst("DigitalMultimeter0").Write("CONF:CURR:DC 0.1A");
+                    Inst("PowerSupply0").Write("OUTP ON, (@1:2)");
                     await Task.Delay(250, ct);
 
                     WriteRegister(0x400, 0x3F);
@@ -462,7 +464,7 @@ namespace SKAIChips_Verification_Tool.RegisterControl
                         ct.ThrowIfCancellationRequested();
                         double v = iv / 100.0;
 
-                        PowerSupply0?.Write($"VOLT {v.ToString("F2", CultureInfo.InvariantCulture)}, (@2)");
+                        Inst("PowerSupply0").Write($"VOLT {v.ToString("F2", CultureInfo.InvariantCulture)}, (@2)");
                         await Task.Delay(500, ct);
 
                         double cur = ReadMilliAmpAvg();
@@ -479,7 +481,7 @@ namespace SKAIChips_Verification_Tool.RegisterControl
                     // ==========================================
                     // 2. VDD Sweep (VDD Sheet)
                     // ==========================================
-                    PowerSupply0?.Write("VOLT 0.6, (@2)");
+                    Inst("PowerSupply0").Write("VOLT 0.6, (@2)");
                     await Task.Delay(500, ct);
 
                     ctx.Report.SelectSheet(shVdd.Name);
@@ -490,7 +492,7 @@ namespace SKAIChips_Verification_Tool.RegisterControl
                     {
                         ct.ThrowIfCancellationRequested();
 
-                        PowerSupply0?.Write($"VOLT {vdd.ToString("F2", CultureInfo.InvariantCulture)}, (@1)");
+                        Inst("PowerSupply0").Write($"VOLT {vdd.ToString("F2", CultureInfo.InvariantCulture)}, (@1)");
                         await Task.Delay(500, ct);
 
                         double cur = ReadMilliAmpAvg();
@@ -507,7 +509,7 @@ namespace SKAIChips_Verification_Tool.RegisterControl
                     // ==========================================
                     // 3. I[5:0] Sweep (VDD Sheet)
                     // ==========================================
-                    PowerSupply0?.Write("VOLT 5, (@1)");
+                    Inst("PowerSupply0").Write("VOLT 5, (@1)");
                     await Task.Delay(500, ct);
 
                     ctx.Report.SelectSheet(shI.Name);
@@ -616,7 +618,7 @@ namespace SKAIChips_Verification_Tool.RegisterControl
                         ctx.Report.Save();
                     }
 
-                    PowerSupply0?.Write("OUTP OFF, (@1:2)");
+                    Inst("PowerSupply0").Write("OUTP OFF, (@1:2)");
 
                     int nextChip = chipNo + 1;
                     if (!ConfirmContinueNext(nextChip))
@@ -641,7 +643,7 @@ namespace SKAIChips_Verification_Tool.RegisterControl
             {
                 try
                 {
-                    PowerSupply0?.Write("OUTP OFF, (@1:2)");
+                    Inst("PowerSupply0").Write("OUTP OFF, (@1:2)");
                 }
                 catch { }
             }
@@ -653,6 +655,8 @@ namespace SKAIChips_Verification_Tool.RegisterControl
             try
             {
                 ct.ThrowIfCancellationRequested();
+
+                CheckInstruments("PowerSupply0", "DigitalMultimeter0");
 
                 const string segLabel = "SEG16";
                 const int avgTime = 1;
@@ -669,18 +673,12 @@ namespace SKAIChips_Verification_Tool.RegisterControl
                 if (string.IsNullOrWhiteSpace(sCycle) || !int.TryParse(sCycle, NumberStyles.Integer, CultureInfo.InvariantCulture, out int totalCycles))
                     return;
 
-                if (PowerSupply0 == null || DigitalMultimeter0 == null)
-                {
-                    await log("ERROR", "Instruments not connected.");
-                    return;
-                }
-
                 double ReadMilliAmpAvg()
                 {
                     double sum = 0;
                     for (int i = 0; i < avgTime; i++)
                     {
-                        var s = DigitalMultimeter0.Query("READ?");
+                        var s = Inst("DigitalMultimeter0").Query("READ?");
                         if (double.TryParse(s, NumberStyles.Float, CultureInfo.InvariantCulture, out double val))
                             sum += val;
                     }
@@ -694,10 +692,10 @@ namespace SKAIChips_Verification_Tool.RegisterControl
 
                     ct.ThrowIfCancellationRequested();
 
-                    PowerSupply0.Write($"VOLT {setV.ToString("F4", CultureInfo.InvariantCulture)}, (@2)");
+                    Inst("PowerSupply0").Write($"VOLT {setV.ToString("F4", CultureInfo.InvariantCulture)}, (@2)");
                     await Task.Delay(500, ct);
 
-                    string resp = PowerSupply0.Query("MEAS:VOLT? (@2)");
+                    string resp = Inst("PowerSupply0").Query("MEAS:VOLT? (@2)");
                     if (!double.TryParse(resp, NumberStyles.Float, CultureInfo.InvariantCulture, out measuredV))
                     {
                         await log("WARN", $"Voltage Measure Failed: {resp}");
@@ -706,7 +704,7 @@ namespace SKAIChips_Verification_Tool.RegisterControl
                     double error = targetV - measuredV;
 
                     setV += error;
-                    PowerSupply0.Write($"VOLT {setV.ToString("F4", CultureInfo.InvariantCulture)}, (@2)");
+                    Inst("PowerSupply0").Write($"VOLT {setV.ToString("F4", CultureInfo.InvariantCulture)}, (@2)");
                     await Task.Delay(500, ct);
 
                     return measuredV;
@@ -715,10 +713,10 @@ namespace SKAIChips_Verification_Tool.RegisterControl
                 if (Ui(() => MessageBox.Show($"{segLabel} Probing 후 OK를 누르세요.\n(총 {totalCycles}회 반복)\n*전압 정밀 보정 기능이 활성화됩니다.", "Ready", MessageBoxButtons.OKCancel, MessageBoxIcon.Information)) != DialogResult.OK)
                     return;
 
-                PowerSupply0.Write("VOLT 5, (@1)");
-                PowerSupply0.Write("VOLT 0.6, (@2)");
-                DigitalMultimeter0.Write("CONF:CURR:DC 0.1A");
-                PowerSupply0.Write("OUTP ON, (@1:2)");
+                Inst("PowerSupply0").Write("VOLT 5, (@1)");
+                Inst("PowerSupply0").Write("VOLT 0.6, (@2)");
+                Inst("DigitalMultimeter0").Write("CONF:CURR:DC 0.1A");
+                Inst("PowerSupply0").Write("OUTP ON, (@1:2)");
                 await Task.Delay(500, ct);
                 WriteRegister(0x40D, 0x02);
 
@@ -793,7 +791,7 @@ namespace SKAIChips_Verification_Tool.RegisterControl
             {
                 try
                 {
-                    PowerSupply0?.Write("OUTP OFF, (@1:2)");
+                    Inst("PowerSupply0").Write("OUTP OFF, (@1:2)");
                 }
                 catch { }
             }
@@ -875,14 +873,14 @@ namespace SKAIChips_Verification_Tool.RegisterControl
             try
             {
                 TSP_125_TRIM = _regCont?.RegMgr.GetRegisterItem(this, "TSP_125_TRIM");
-                if (DigitalMultimeter0 == null)
-                    throw new Exception("Fail to connect Instruments: DigitalMultimeter0.");
+
+                CheckInstruments("DigitalMultimeter0");
 
                 int left = 0, right = 31, bestCode = -1;
                 double bestDiff = double.MaxValue, dmmVolt = 0.0;
 
                 SetTestAna125Ref();
-                DigitalMultimeter0.Write("CONF:VOLT:DC AUTO");
+                Inst("DigitalMultimeter0").Write("CONF:VOLT:DC AUTO");
 
                 while (left <= right)
                 {
@@ -901,7 +899,7 @@ namespace SKAIChips_Verification_Tool.RegisterControl
                     for (int i = 0; i < 3; i++)
                     {
                         ct.ThrowIfCancellationRequested();
-                        string? response = DigitalMultimeter0.Query("READ?");
+                        string? response = Inst("DigitalMultimeter0").Query("READ?");
                         if (!double.TryParse(response, NumberStyles.Float, CultureInfo.InvariantCulture, out var mv))
                             throw new Exception($"DMM returned invalid measurement: '{response}'");
                         measurements.Add(mv);
@@ -933,7 +931,7 @@ namespace SKAIChips_Verification_Tool.RegisterControl
                 for (int i = 0; i < 3; i++)
                 {
                     ct.ThrowIfCancellationRequested();
-                    string? response = DigitalMultimeter0.Query("READ?");
+                    string? response = Inst("DigitalMultimeter0").Query("READ?");
                     if (!double.TryParse(response, NumberStyles.Float, CultureInfo.InvariantCulture, out var mv))
                         throw new FormatException($"DMM returned invalid measurement: '{response}'");
                     finalMeasurements.Add(mv);
@@ -956,7 +954,7 @@ namespace SKAIChips_Verification_Tool.RegisterControl
                 catch { }
                 try
                 {
-                    DigitalMultimeter0?.Write("CONF:VOLT:AC AUTO");
+                    Inst("DigitalMultimeter0").Write("CONF:VOLT:AC AUTO");
                 }
                 catch { }
             }
@@ -969,14 +967,13 @@ namespace SKAIChips_Verification_Tool.RegisterControl
             try
             {
                 TSP_150_TRIM = _regCont?.RegMgr.GetRegisterItem(this, "TSP_150_TRIM");
-                if (DigitalMultimeter0 == null)
-                    throw new Exception("Fail to connect Instruments: DigitalMultimeter0.");
+                CheckInstruments("DigitalMultimeter0");
 
                 int left = 0, right = 31, bestCode = -1;
                 double bestDiff = double.MaxValue, dmmVolt = 0.0;
 
                 SetTestAna150Ref();
-                DigitalMultimeter0.Write("CONF:VOLT:DC AUTO");
+                Inst("DigitalMultimeter0").Write("CONF:VOLT:DC AUTO");
 
                 while (left <= right)
                 {
@@ -994,7 +991,7 @@ namespace SKAIChips_Verification_Tool.RegisterControl
                     for (int i = 0; i < 3; i++)
                     {
                         ct.ThrowIfCancellationRequested();
-                        string? response = DigitalMultimeter0.Query("READ?");
+                        string? response = Inst("DigitalMultimeter0").Query("READ?");
                         if (!double.TryParse(response, NumberStyles.Float, CultureInfo.InvariantCulture, out var mv))
                             throw new Exception($"DMM returned invalid measurement: '{response}'");
                         measurements.Add(mv);
@@ -1026,7 +1023,7 @@ namespace SKAIChips_Verification_Tool.RegisterControl
                 for (int i = 0; i < 3; i++)
                 {
                     ct.ThrowIfCancellationRequested();
-                    string? response = DigitalMultimeter0.Query("READ?");
+                    string? response = Inst("DigitalMultimeter0").Query("READ?");
                     if (!double.TryParse(response, NumberStyles.Float, CultureInfo.InvariantCulture, out var mv))
                         throw new FormatException($"DMM returned invalid measurement: '{response}'");
                     finalMeasurements.Add(mv);
@@ -1049,7 +1046,7 @@ namespace SKAIChips_Verification_Tool.RegisterControl
                 catch { }
                 try
                 {
-                    DigitalMultimeter0?.Write("CONF:VOLT:AC AUTO");
+                    Inst("DigitalMultimeter0").Write("CONF:VOLT:AC AUTO");
                 }
                 catch { }
             }
@@ -1062,11 +1059,11 @@ namespace SKAIChips_Verification_Tool.RegisterControl
             try
             {
                 VPTAT_OUT_TRIM = _regCont?.RegMgr.GetRegisterItem(this, "VPTAT_OUT_TRIM");
-                if (DigitalMultimeter0 == null)
-                    throw new Exception("Fail to connect Instruments: DigitalMultimeter0.");
+
+                CheckInstruments("DigitalMultimeter0");
 
                 SetTestAnaPtatOut();
-                DigitalMultimeter0.Write("CONF:VOLT:DC AUTO");
+                Inst("DigitalMultimeter0").Write("CONF:VOLT:DC AUTO");
 
                 int left = 0, right = 31, bestOrd = -1;
                 double bestDiff = double.MaxValue;
@@ -1078,7 +1075,7 @@ namespace SKAIChips_Verification_Tool.RegisterControl
                     VPTAT_OUT_TRIM.Write();
                 }
                 await Task.Delay(100, ct);
-                double vL = await ReadAvgVolt(DigitalMultimeter0, ct);
+                double vL = await ReadAvgVolt(Inst("DigitalMultimeter0"), ct);
 
                 if (VPTAT_OUT_TRIM != null)
                 {
@@ -1086,7 +1083,7 @@ namespace SKAIChips_Verification_Tool.RegisterControl
                     VPTAT_OUT_TRIM.Write();
                 }
                 await Task.Delay(100, ct);
-                double vR = await ReadAvgVolt(DigitalMultimeter0, ct);
+                double vR = await ReadAvgVolt(Inst("DigitalMultimeter0"), ct);
 
                 bool isDescending = vR < vL;
 
@@ -1103,7 +1100,7 @@ namespace SKAIChips_Verification_Tool.RegisterControl
                     }
                     await Task.Delay(100, ct);
 
-                    double dmmVolt = await ReadAvgVolt(DigitalMultimeter0, ct);
+                    double dmmVolt = await ReadAvgVolt(Inst("DigitalMultimeter0"), ct);
                     double diff = Math.Round(Math.Abs(target - dmmVolt), 4);
 
                     if (diff < bestDiff)
@@ -1137,7 +1134,7 @@ namespace SKAIChips_Verification_Tool.RegisterControl
                     await Task.Delay(100, ct);
                 }
 
-                double finalVolt = await ReadAvgVolt(DigitalMultimeter0, ct);
+                double finalVolt = await ReadAvgVolt(Inst("DigitalMultimeter0"), ct);
                 return new[] { finalVolt, bestCode };
             }
             catch (Exception e)
@@ -1154,7 +1151,7 @@ namespace SKAIChips_Verification_Tool.RegisterControl
                 catch { }
                 try
                 {
-                    DigitalMultimeter0?.Write("CONF:VOLT:AC AUTO");
+                    Inst("DigitalMultimeter0").Write("CONF:VOLT:AC AUTO");
                 }
                 catch { }
             }
@@ -1181,17 +1178,17 @@ namespace SKAIChips_Verification_Tool.RegisterControl
             try
             {
                 RCOSC_BIAS_TRIM = _regCont?.RegMgr.GetRegisterItem(this, "RC_OSC_BIAS_TRIM");
-                if (OscilloScope0 == null)
-                    throw new Exception("Fail to connect Instruments: OscilloScope0.");
+
+                CheckInstruments("OscilloScope0");
 
                 int left = 0, right = 31, bestCode = -1;
                 double bestDiff = double.MaxValue, oscMHz = 0.0;
 
                 SetTestAnaOscFreq();
-                OscilloScope0.Write(":CHAN1:SCAL 2");
-                OscilloScope0.Write(":CHAN1:OFFS 0");
-                OscilloScope0.Write(":TIM:SCAL 2.00E-7");
-                OscilloScope0.Write(":TIM:POS 0");
+                Inst("OscilloScope0").Write(":CHAN1:SCAL 2");
+                Inst("OscilloScope0").Write(":CHAN1:OFFS 0");
+                Inst("OscilloScope0").Write(":TIM:SCAL 2.00E-7");
+                Inst("OscilloScope0").Write(":TIM:POS 0");
 
                 while (left <= right)
                 {
@@ -1209,8 +1206,8 @@ namespace SKAIChips_Verification_Tool.RegisterControl
                     for (int i = 0; i < 3; i++)
                     {
                         ct.ThrowIfCancellationRequested();
-                        OscilloScope0.Write(":MEAS:FREQ CHAN1");
-                        string? response = OscilloScope0.Query(":MEAS:FREQ?");
+                        Inst("OscilloScope0").Write(":MEAS:FREQ CHAN1");
+                        string? response = Inst("OscilloScope0").Query(":MEAS:FREQ?");
                         if (!double.TryParse(response, NumberStyles.Float, CultureInfo.InvariantCulture, out var mv))
                             throw new Exception($"OscilloScope returned invalid measurement: '{response}'");
                         measurements.Add(mv);
@@ -1242,8 +1239,8 @@ namespace SKAIChips_Verification_Tool.RegisterControl
                 for (int i = 0; i < 3; i++)
                 {
                     ct.ThrowIfCancellationRequested();
-                    OscilloScope0.Write(":MEAS:FREQ CHAN1");
-                    string? response = OscilloScope0.Query(":MEAS:FREQ?");
+                    Inst("OscilloScope0").Write(":MEAS:FREQ CHAN1");
+                    string? response = Inst("OscilloScope0").Query(":MEAS:FREQ?");
                     if (!double.TryParse(response, NumberStyles.Float, CultureInfo.InvariantCulture, out var mv))
                         throw new FormatException($"OscilloScope returned invalid measurement: '{response}'");
                     finalMeasurements.Add(mv);
@@ -1281,13 +1278,12 @@ namespace SKAIChips_Verification_Tool.RegisterControl
                     RES = _regCont.RegMgr.GetRegisterItem(this, "RES");
                 }
 
-                if (PowerSupply0 == null || DigitalMultimeter1 == null)
-                    throw new Exception("Fail to connect Instruments: PowerSupply0 / DigitalMultimeter1.");
+                CheckInstruments("PowerSupply0", "DigitalMultimeter1");
 
                 int left = 0, right = 31, bestCode = -1;
                 double bestDiff = double.MaxValue, currentmA = 0.0;
 
-                DigitalMultimeter1.Write("CONF:CURR:DC 0.1");
+                Inst("DigitalMultimeter1").Write("CONF:CURR:DC 0.1");
 
                 if (SEG_CURR != null)
                 {
@@ -1306,9 +1302,9 @@ namespace SKAIChips_Verification_Tool.RegisterControl
                 }
                 await Task.Delay(100, ct);
 
-                PowerSupply0.Write("VOLT 0.6, (@2)");
-                PowerSupply0.Write("CURR 1, (@2)");
-                PowerSupply0.Write("OUTP ON, (@2)");
+                Inst("PowerSupply0").Write("VOLT 0.6, (@2)");
+                Inst("PowerSupply0").Write("CURR 1, (@2)");
+                Inst("PowerSupply0").Write("OUTP ON, (@2)");
 
                 while (left <= right)
                 {
@@ -1322,7 +1318,7 @@ namespace SKAIChips_Verification_Tool.RegisterControl
                     }
                     await Task.Delay(100, ct);
 
-                    double avgCurrent = await ReadAvgCurrentMA(DigitalMultimeter1, ct);
+                    double avgCurrent = await ReadAvgCurrentMA(Inst("DigitalMultimeter1"), ct);
                     currentmA = avgCurrent;
                     double diff = Math.Round(Math.Abs(target - currentmA), 2);
 
@@ -1345,7 +1341,7 @@ namespace SKAIChips_Verification_Tool.RegisterControl
                 }
                 await Task.Delay(100, ct);
 
-                currentmA = await ReadAvgCurrentMA(DigitalMultimeter1, ct);
+                currentmA = await ReadAvgCurrentMA(Inst("DigitalMultimeter1"), ct);
                 return new[] { currentmA, bestCode };
             }
             catch (Exception e)
@@ -1357,7 +1353,7 @@ namespace SKAIChips_Verification_Tool.RegisterControl
             {
                 try
                 {
-                    PowerSupply0?.Write("OUTP OFF, (@2)");
+                    Inst("PowerSupply0").Write("OUTP OFF, (@2)");
                 }
                 catch { }
                 try
@@ -1390,13 +1386,12 @@ namespace SKAIChips_Verification_Tool.RegisterControl
                     SEG_TEST = _regCont.RegMgr.GetRegisterItem(this, "SEG_TEST");
                 }
 
-                if (PowerSupply0 == null || DigitalMultimeter1 == null)
-                    throw new Exception("Fail to connect Instruments: PowerSupply0 / DigitalMultimeter1.");
+                CheckInstruments("PowerSupply0", "DigitalMultimeter1");
 
                 int left = 0, right = 31, bestCode = -1;
                 double bestDiff = double.MaxValue, currentmA = 0.0;
 
-                DigitalMultimeter1.Write("CONF:CURR:DC 0.1");
+                Inst("DigitalMultimeter1").Write("CONF:CURR:DC 0.1");
 
                 if (SEG_CURR != null)
                 {
@@ -1410,9 +1405,9 @@ namespace SKAIChips_Verification_Tool.RegisterControl
                 }
                 await Task.Delay(100, ct);
 
-                PowerSupply0.Write("VOLT 0.6, (@2)");
-                PowerSupply0.Write("CURR 1, (@2)");
-                PowerSupply0.Write("OUTP ON, (@2)");
+                Inst("PowerSupply0").Write("VOLT 0.6, (@2)");
+                Inst("PowerSupply0").Write("CURR 1, (@2)");
+                Inst("PowerSupply0").Write("OUTP ON, (@2)");
 
                 while (left <= right)
                 {
@@ -1426,7 +1421,7 @@ namespace SKAIChips_Verification_Tool.RegisterControl
                     }
                     await Task.Delay(100, ct);
 
-                    double avgCurrent = await ReadAvgCurrentMA(DigitalMultimeter1, ct);
+                    double avgCurrent = await ReadAvgCurrentMA(Inst("DigitalMultimeter1"), ct);
                     currentmA = avgCurrent;
                     double diff = Math.Round(Math.Abs(target - currentmA), 2);
 
@@ -1449,7 +1444,7 @@ namespace SKAIChips_Verification_Tool.RegisterControl
                 }
                 await Task.Delay(100, ct);
 
-                currentmA = await ReadAvgCurrentMA(DigitalMultimeter1, ct);
+                currentmA = await ReadAvgCurrentMA(Inst("DigitalMultimeter1"), ct);
                 return new[] { currentmA, bestCode };
             }
             catch (Exception e)
@@ -1461,7 +1456,7 @@ namespace SKAIChips_Verification_Tool.RegisterControl
             {
                 try
                 {
-                    PowerSupply0?.Write("OUTP OFF, (@2)");
+                    Inst("PowerSupply0").Write("OUTP OFF, (@2)");
                 }
                 catch { }
                 try
@@ -1718,26 +1713,25 @@ namespace SKAIChips_Verification_Tool.RegisterControl
         {
             try
             {
-                if (PowerSupply0 == null || DigitalMultimeter2 == null)
-                    throw new Exception("Fail to connect Instruments: PowerSupply0 / DigitalMultimeter2");
+                CheckInstruments("PowerSupply0", "DigitalMultimeter2");
 
                 double[] porDetect = new double[2];
 
-                DigitalMultimeter2.Write("SENS:FUNC 'CURR:DC'");
-                DigitalMultimeter2.Write("SENS:CURR:DC:RANG 0.1");
+                Inst("DigitalMultimeter2").Write("SENS:FUNC 'CURR:DC'");
+                Inst("DigitalMultimeter2").Write("SENS:CURR:DC:RANG 0.1");
 
-                PowerSupply0.Write("VOLT 0, (@1)");
-                PowerSupply0.Write("CURR 1, (@1)");
-                PowerSupply0.Write("OUTP ON, (@1)");
+                Inst("PowerSupply0").Write("VOLT 0, (@1)");
+                Inst("PowerSupply0").Write("CURR 1, (@1)");
+                Inst("PowerSupply0").Write("OUTP ON, (@1)");
                 await Task.Delay(1000, ct);
 
                 for (double volt = 2; volt < 2.6; volt += 0.05)
                 {
                     ct.ThrowIfCancellationRequested();
-                    PowerSupply0.Write($"VOLT {volt}, (@1)");
+                    Inst("PowerSupply0").Write($"VOLT {volt}, (@1)");
                     await Task.Delay(1500, ct);
 
-                    string response = DigitalMultimeter2.Query("READ?");
+                    string response = Inst("DigitalMultimeter2").Query("READ?");
                     if (!double.TryParse(response, NumberStyles.Float, CultureInfo.InvariantCulture, out var mv))
                         throw new FormatException($"Invalid response: '{response}'");
 
@@ -1752,10 +1746,10 @@ namespace SKAIChips_Verification_Tool.RegisterControl
                 for (double volt = 2.2; volt > 1.65; volt -= 0.05)
                 {
                     ct.ThrowIfCancellationRequested();
-                    PowerSupply0.Write($"VOLT {volt}, (@1)");
+                    Inst("PowerSupply0").Write($"VOLT {volt}, (@1)");
                     await Task.Delay(1500, ct);
 
-                    string response = DigitalMultimeter2.Query("READ?");
+                    string response = Inst("DigitalMultimeter2").Query("READ?");
                     if (!double.TryParse(response, NumberStyles.Float, CultureInfo.InvariantCulture, out var mv))
                         throw new FormatException($"Invalid response: '{response}'");
 
@@ -1778,12 +1772,12 @@ namespace SKAIChips_Verification_Tool.RegisterControl
             {
                 try
                 {
-                    PowerSupply0?.Write("VOLT 5, (@1)");
+                    Inst("PowerSupply0").Write("VOLT 5, (@1)");
                 }
                 catch { }
                 try
                 {
-                    DigitalMultimeter2?.Write("SENS:CURR:DC:RANG 0.1");
+                    Inst("DigitalMultimeter2").Write("SENS:CURR:DC:RANG 0.1");
                 }
                 catch { }
             }
@@ -1793,25 +1787,24 @@ namespace SKAIChips_Verification_Tool.RegisterControl
         {
             try
             {
-                if (PowerSupply0 == null || DigitalMultimeter2 == null)
-                    throw new Exception("Fail to connect Instruments: PowerSupply0 / DigitalMultimeter2");
+                CheckInstruments("PowerSupply0", "DigitalMultimeter2");
 
                 double[] standbyCurrent = new double[2];
                 var sleep_en = _regCont?.RegMgr.GetRegisterItem(this, "SLEEP");
 
-                DigitalMultimeter2.Write("SENS:FUNC 'CURR:DC'");
-                DigitalMultimeter2.Write("SENS:CURR:DC:RANGE 1E-3");
+                Inst("DigitalMultimeter2").Write("SENS:FUNC 'CURR:DC'");
+                Inst("DigitalMultimeter2").Write("SENS:CURR:DC:RANGE 1E-3");
 
-                PowerSupply0.Write("VOLT 5, (@1)");
-                PowerSupply0.Write("CURR 1, (@1)");
-                PowerSupply0.Write("OUTP ON, (@1)");
+                Inst("PowerSupply0").Write("VOLT 5, (@1)");
+                Inst("PowerSupply0").Write("CURR 1, (@1)");
+                Inst("PowerSupply0").Write("OUTP ON, (@1)");
                 await Task.Delay(1000, ct);
 
                 double temp = 0;
                 for (int i = 0; i < 5; i++)
                 {
                     ct.ThrowIfCancellationRequested();
-                    string response = DigitalMultimeter2.Query("READ?");
+                    string response = Inst("DigitalMultimeter2").Query("READ?");
                     if (!double.TryParse(response, NumberStyles.Float, CultureInfo.InvariantCulture, out var mv))
                         throw new FormatException($"Invalid response: '{response}'");
                     temp += Math.Round(mv * 1_000, 2);
@@ -1827,13 +1820,13 @@ namespace SKAIChips_Verification_Tool.RegisterControl
                 this.WriteCommand(0x0E);
                 await Task.Delay(300, ct);
 
-                DigitalMultimeter2.Write("SENS:CURR:DC:RANGE 1E-4");
+                Inst("DigitalMultimeter2").Write("SENS:CURR:DC:RANGE 1E-4");
 
                 temp = 0;
                 for (int i = 0; i < 5; i++)
                 {
                     ct.ThrowIfCancellationRequested();
-                    string response = DigitalMultimeter2.Query("READ?");
+                    string response = Inst("DigitalMultimeter2").Query("READ?");
                     if (!double.TryParse(response, NumberStyles.Float, CultureInfo.InvariantCulture, out var mv))
                         throw new FormatException($"Invalid response: '{response}'");
                     temp += Math.Round(mv * 1_000_000, 2);
@@ -1851,7 +1844,7 @@ namespace SKAIChips_Verification_Tool.RegisterControl
             {
                 try
                 {
-                    PowerSupply0?.Write("OUTP OFF, (@1)");
+                    Inst("PowerSupply0").Write("OUTP OFF, (@1)");
                 }
                 catch { }
             }
@@ -1859,8 +1852,7 @@ namespace SKAIChips_Verification_Tool.RegisterControl
 
         private async Task<double[]?> RunMeasSegCurrent(IReportSheet segSheet, IReportSheet initSheet, int xOffset, CancellationToken ct)
         {
-            if (DigitalMultimeter1 == null)
-                throw new Exception("Fail to connect Instruments: DigitalMultimeter1");
+            CheckInstruments("DigitalMultimeter1");
 
             var SEG_CURR = _regCont?.RegMgr.GetRegisterItem(this, "I[5:0]");
             var SEG_TEST = _regCont?.RegMgr.GetRegisterItem(this, "SEG_TEST");
@@ -1883,11 +1875,11 @@ namespace SKAIChips_Verification_Tool.RegisterControl
                     SEG_TEST.Write();
                 }
 
-                DigitalMultimeter1.Write("CONF:CURR:DC 0.1");
+                Inst("DigitalMultimeter1").Write("CONF:CURR:DC 0.1");
 
-                PowerSupply0?.Write("VOLT 0.6, (@2)");
-                PowerSupply0?.Write("CURR 1, (@2)");
-                PowerSupply0?.Write("OUTP ON, (@2)");
+                Inst("PowerSupply0").Write("VOLT 0.6, (@2)");
+                Inst("PowerSupply0").Write("CURR 1, (@2)");
+                Inst("PowerSupply0").Write("OUTP ON, (@2)");
 
                 int[] segCount = { 16, 24, 32 };
                 // Safety check for _segMode index
@@ -1909,7 +1901,7 @@ namespace SKAIChips_Verification_Tool.RegisterControl
 
                     while (checkConnection)
                     {
-                        string response = DigitalMultimeter1.Query("READ?");
+                        string response = Inst("DigitalMultimeter1").Query("READ?");
                         if (!double.TryParse(response, NumberStyles.Float, CultureInfo.InvariantCulture, out var measuredValue))
                             throw new FormatException($"Invalid response: '{response}'");
 
@@ -1941,7 +1933,7 @@ namespace SKAIChips_Verification_Tool.RegisterControl
 
                     for (int j = 0; j < 4; j++)
                     {
-                        string response = DigitalMultimeter1.Query("READ?");
+                        string response = Inst("DigitalMultimeter1").Query("READ?");
                         if (!double.TryParse(response, NumberStyles.Float, CultureInfo.InvariantCulture, out var measuredValue))
                             throw new FormatException($"Invalid response: '{response}'");
 
@@ -1972,7 +1964,7 @@ namespace SKAIChips_Verification_Tool.RegisterControl
             {
                 try
                 {
-                    PowerSupply0?.Write("OUTP OFF, (@2)");
+                    Inst("PowerSupply0").Write("OUTP OFF, (@2)");
                     if (SEG_TEST != null)
                     {
                         SEG_TEST.Value = 0;
@@ -1992,8 +1984,7 @@ namespace SKAIChips_Verification_Tool.RegisterControl
             try
             {
                 step = "CHECK_INSTRUMENTS";
-                if (PowerSupply0 == null || DigitalMultimeter0 == null || DigitalMultimeter1 == null || DigitalMultimeter2 == null)
-                    throw new Exception("Fail to connect Instruments: PowerSupply0 / DigitalMultimeter0~2");
+                CheckInstruments("PowerSupply0", "DigitalMultimeter0", "DigitalMultimeter1", "DigitalMultimeter2");
 
                 string[] pkgType = { "32QFN", "40QFN", "48QFN" };
 
@@ -2234,7 +2225,7 @@ namespace SKAIChips_Verification_Tool.RegisterControl
                     }
                     await Task.Delay(100, ct);
 
-                    PowerSupply0.Write("VOLT 5.5, (@1)");
+                    Inst("PowerSupply0").Write("VOLT 5.5, (@1)");
                     await Task.Delay(500, ct);
 
                     if (_regCont != null)
@@ -2251,7 +2242,7 @@ namespace SKAIChips_Verification_Tool.RegisterControl
                     }
                     await Task.Delay(100, ct);
 
-                    PowerSupply0.Write("VOLT 5, (@1)");
+                    Inst("PowerSupply0").Write("VOLT 5, (@1)");
                     await Task.Delay(500, ct);
 
                     if (_regCont != null)
@@ -2311,7 +2302,7 @@ namespace SKAIChips_Verification_Tool.RegisterControl
 
                     try
                     {
-                        PowerSupply0.Write("OUTP OFF, (@1:2)");
+                        Inst("PowerSupply0").Write("OUTP OFF, (@1:2)");
                     }
                     catch { }
 
@@ -2346,12 +2337,12 @@ namespace SKAIChips_Verification_Tool.RegisterControl
                 catch { }
                 try
                 {
-                    PowerSupply0?.Write("OUTP OFF, (@1:2)");
+                    Inst("PowerSupply0").Write("OUTP OFF, (@1:2)");
                 }
                 catch { }
                 try
                 {
-                    DigitalMultimeter0?.Write("CONF:VOLT:AC AUTO");
+                    Inst("DigitalMultimeter0").Write("CONF:VOLT:AC AUTO");
                 }
                 catch { }
             }

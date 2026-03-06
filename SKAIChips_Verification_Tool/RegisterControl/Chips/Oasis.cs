@@ -302,14 +302,13 @@
         }
 
         private async Task<double[]?> AutoTrimAbgr(CancellationToken ct)
-        {
+        { 
             ct.ThrowIfCancellationRequested();
 
             if (_regCont == null)
                 throw new InvalidOperationException("RegisterControlForm is null.");
 
-            if (DigitalMultimeter2 == null)
-                throw new InvalidOperationException("DigitalMultimeter2 is not connected.");
+            CheckInstruments("DigitalMultimeter2");
 
             var ABGR_CONT = _regCont.RegMgr.GetRegisterItem(this, "O_ABGR_CONT[3:0]");
 
@@ -330,7 +329,7 @@
                 ABGR_CONT.Write();
                 await Task.Delay(10);
 
-                dmm_volt_mv = double.Parse(DigitalMultimeter2.Query(":MEAS:VOLT:DC?")) * 1000;
+                dmm_volt_mv = double.Parse(Inst("DigitalMultimeter2").Query(":MEAS:VOLT:DC?")) * 1000;
 
                 if (Math.Abs(dmm_volt_mv - bgr_target_mv) <= 2)
                 {
@@ -349,7 +348,7 @@
             ABGR_CONT.Write();
             await Task.Delay(10);
 
-            dmm_volt_mv = double.Parse(DigitalMultimeter2.Query(":MEAS:VOLT:DC?")) * 1000;
+            dmm_volt_mv = double.Parse(Inst("DigitalMultimeter2").Query(":MEAS:VOLT:DC?")) * 1000;
 
             trim_value[0] = bgr_cont[mid];
             trim_value[1] = dmm_volt_mv;
@@ -366,8 +365,7 @@
             if (_regCont == null)
                 throw new InvalidOperationException("RegisterControlForm is null.");
 
-            if (DigitalMultimeter1 == null)
-                throw new InvalidOperationException("DigitalMultimeter1 is not connected.");
+            CheckInstruments("DigitalMultimeter1");
 
             var MLDO_CONT = _regCont.RegMgr.GetRegisterItem(this, "O_MLDO_CONT[5:0]");
 
@@ -390,7 +388,7 @@
                 MLDO_CONT.Write();
                 await Task.Delay(10);
 
-                dmm_volt_mv = double.Parse(DigitalMultimeter1.Query(":MEAS:VOLT:DC?")) * 1000;
+                dmm_volt_mv = double.Parse(Inst("DigitalMultimeter1").Query(":MEAS:VOLT:DC?")) * 1000;
 
                 if (Math.Abs(dmm_volt_mv - mldo_target_mv) <= 4.5)
                 {
@@ -410,7 +408,7 @@
             MLDO_CONT.Write();
             await Task.Delay(10);
 
-            dmm_volt_mv = double.Parse(DigitalMultimeter1.Query(":MEAS:VOLT:DC?")) * 1000;
+            dmm_volt_mv = double.Parse(Inst("DigitalMultimeter1").Query(":MEAS:VOLT:DC?")) * 1000;
 
             trim_value[0] = mldo_cont[mid];
             trim_value[1] = dmm_volt_mv;
@@ -425,8 +423,7 @@
             if (_regCont == null)
                 throw new InvalidOperationException("RegisterControlForm is null.");
 
-            if (DigitalMultimeter0 == null)
-                throw new InvalidOperationException("DigitalMultimeter0 is not connected.");
+            CheckInstruments("DigitalMultimeter0");
 
             var ALDO_CONT = _regCont.RegMgr.GetRegisterItem(this, "O_ALDO_CONT[5:0]");
 
@@ -452,7 +449,7 @@
                 ALDO_CONT.Write();
                 await Task.Delay(10);
 
-                dmm_volt_mv = double.Parse(DigitalMultimeter0.Query(":MEAS:VOLT:DC?")) * 1000;
+                dmm_volt_mv = double.Parse(Inst("DigitalMultimeter0").Query(":MEAS:VOLT:DC?")) * 1000;
 
                 if (Math.Abs(dmm_volt_mv - aldo_target_mv) <= 4.5)
                 {
@@ -472,7 +469,7 @@
             ALDO_CONT.Write();
             await Task.Delay(10);
 
-            dmm_volt_mv = double.Parse(DigitalMultimeter0.Query(":MEAS:VOLT:DC?")) * 1000;
+            dmm_volt_mv = double.Parse(Inst("DigitalMultimeter0").Query(":MEAS:VOLT:DC?")) * 1000;
 
             trim_value[0] = aldo_cont[mid];
             trim_value[1] = dmm_volt_mv;
@@ -487,8 +484,7 @@
             if (_regCont == null)
                 throw new InvalidOperationException("RegisterControlForm is null.");
 
-            if (DigitalMultimeter2 == null)
-                throw new InvalidOperationException("DigitalMultimeter2 is not connected.");
+            CheckInstruments("DigitalMultimeter2");
 
             var FLDO_CONT = _regCont.RegMgr.GetRegisterItem(this, "O_FLDO_CONT[3:0]");
 
@@ -505,7 +501,7 @@
                 FLDO_CONT.Write();
                 await Task.Delay(10);
 
-                dmm_volt_mv = double.Parse(DigitalMultimeter2.Query(":MEAS:VOLT:DC?")) * 1000;
+                dmm_volt_mv = double.Parse(Inst("DigitalMultimeter2").Query(":MEAS:VOLT:DC?")) * 1000;
 
                 if (Math.Abs(dmm_volt_mv - fldo_target_mv) <= 2)
                 {
@@ -524,7 +520,7 @@
             FLDO_CONT.Write();
             await Task.Delay(10);
 
-            dmm_volt_mv = double.Parse(DigitalMultimeter2.Query(":MEAS:VOLT:DC?")) * 1000;
+            dmm_volt_mv = double.Parse(Inst("DigitalMultimeter2").Query(":MEAS:VOLT:DC?")) * 1000;
 
             trim_value[0] = fldo_cont[mid];
             trim_value[1] = dmm_volt_mv;
@@ -539,8 +535,7 @@
             if (_regCont == null)
                 throw new InvalidOperationException("RegisterControlForm is null.");
 
-            if (DigitalMultimeter2 == null)
-                throw new InvalidOperationException("DigitalMultimeter2 is not connected.");
+            CheckInstruments("DigitalMultimeter2");
 
             var DALDO_CONT = _regCont.RegMgr.GetRegisterItem(this, "O_DA_LDO_CONT[5:0]");
 
@@ -563,7 +558,7 @@
                 DALDO_CONT.Write();
                 System.Threading.Thread.Sleep(10);
 
-                dmm_volt_mv = double.Parse(DigitalMultimeter2.Query(":MEAS:VOLT:DC?")) * 1000;
+                dmm_volt_mv = double.Parse(Inst("DigitalMultimeter2").Query(":MEAS:VOLT:DC?")) * 1000;
 
                 if (Math.Abs(dmm_volt_mv - daldo_target_mv) <= 2)
                 {
@@ -583,7 +578,7 @@
             DALDO_CONT.Write();
             System.Threading.Thread.Sleep(10);
 
-            dmm_volt_mv = double.Parse(DigitalMultimeter2.Query(":MEAS:VOLT:DC?")) * 1000;
+            dmm_volt_mv = double.Parse(Inst("DigitalMultimeter2").Query(":MEAS:VOLT:DC?")) * 1000;
 
             trim_value[0] = daldo_cont[mid];
             trim_value[1] = dmm_volt_mv;
@@ -637,8 +632,7 @@
             if (_regCont == null)
                 throw new InvalidOperationException("RegisterControlForm is null.");
 
-            if (SpectrumAnalyzer == null)
-                throw new InvalidOperationException("SpectrumAnalyzer is not connected.");
+            CheckInstruments("SpectrumAnalyzer0");
 
             IReportSheet vcoSheet;
 
@@ -682,17 +676,17 @@
             WriteRegister(0xDC34_0020, (reg0xDC34_0020 & 0xFE00) | 0);
             await Task.Delay(100, ct);
 
-            SpectrumAnalyzer.Write("DISP:TRAC:Y:RLEV 10dBm");
-            SpectrumAnalyzer.Write("FREQ:CENT 2.5 GHz");
-            SpectrumAnalyzer.Write("FREQ:SPAN 1.0 GHz");
+            Inst("SpectrumAnalyzer0").Write("DISP:TRAC:Y:RLEV 10dBm");
+            Inst("SpectrumAnalyzer0").Write("FREQ:CENT 2.5 GHz");
+            Inst("SpectrumAnalyzer0").Write("FREQ:SPAN 1.0 GHz");
 
             await TogglePllPen();
             await Task.Delay(1000, ct);
 
-            SpectrumAnalyzer.Write("CALC:MARK:MAX");
+            Inst("SpectrumAnalyzer0").Write("CALC:MARK:MAX");
             await Task.Delay(1000, ct);
 
-            double freqMHz = Math.Round(double.Parse(SpectrumAnalyzer.Query($"CALC:MARK1:X?")) / 1_000_000, 3);
+            double freqMHz = Math.Round(double.Parse(Inst("SpectrumAnalyzer0").Query($"CALC:MARK1:X?")) / 1_000_000, 3);
             vcoSheet.Write(1, 2, $"0");
             vcoSheet.Write(2, 2, $"{freqMHz}");
 
@@ -703,10 +697,10 @@
             await TogglePllPen();
             await Task.Delay(1000, ct);
 
-            SpectrumAnalyzer.Write("CALC:MARK:MAX");
+            Inst("SpectrumAnalyzer0").Write("CALC:MARK:MAX");
             await Task.Delay(1000, ct);
 
-            freqMHz = Math.Round(double.Parse(SpectrumAnalyzer.Query($"CALC:MARK1:X?")) / 1_000_000, 3);
+            freqMHz = Math.Round(double.Parse(Inst("SpectrumAnalyzer0").Query($"CALC:MARK1:X?")) / 1_000_000, 3);
             vcoSheet.Write(1, 3, $"512");
             vcoSheet.Write(2, 3, $"{freqMHz}");
 
@@ -717,10 +711,10 @@
             await TogglePllPen();
             await Task.Delay(1000, ct);
 
-            SpectrumAnalyzer.Write("CALC:MARK:MAX");
+            Inst("SpectrumAnalyzer0").Write("CALC:MARK:MAX");
             await Task.Delay(1000, ct);
 
-            freqMHz = Math.Round(double.Parse(SpectrumAnalyzer.Query($"CALC:MARK1:X?")) / 1_000_000, 3);
+            freqMHz = Math.Round(double.Parse(Inst("SpectrumAnalyzer0").Query($"CALC:MARK1:X?")) / 1_000_000, 3);
             vcoSheet.Write(1, 4, $"1023");
             vcoSheet.Write(2, 4, $"{freqMHz}");
 
@@ -735,8 +729,7 @@
             if (_regCont == null)
                 throw new InvalidOperationException("RegisterControlForm is null.");
 
-            if (SpectrumAnalyzer == null)
-                throw new InvalidOperationException("SpectrumAnalyzer is not connected.");
+            CheckInstruments("SpectrumAnalyzer0");
 
             IReportSheet txSheet;
 
@@ -811,36 +804,36 @@
             WriteRegister(0xDC34_003C, 2);
             await TogglePllPen();
 
-            SpectrumAnalyzer.Write("FREQ:CENT 2402 MHz");
-            SpectrumAnalyzer.Write("FREQ:SPAN 10 MHz");
-            SpectrumAnalyzer.Write("DISP:TRAC:Y:RLEV 10dBm");
+            Inst("SpectrumAnalyzer0").Write("FREQ:CENT 2402 MHz");
+            Inst("SpectrumAnalyzer0").Write("FREQ:SPAN 10 MHz");
+            Inst("SpectrumAnalyzer0").Write("DISP:TRAC:Y:RLEV 10dBm");
             await Task.Delay(1000);
-            SpectrumAnalyzer.Write("CALC:MARK:MAX");
+            Inst("SpectrumAnalyzer0").Write("CALC:MARK:MAX");
             await Task.Delay(1000);
-            double freqMHz = Math.Round(double.Parse(SpectrumAnalyzer.Query($"CALC:MARK1:X?")) / 1_000_000, 3);
-            double TXpower = Math.Round(double.Parse(SpectrumAnalyzer.Query($"CALC:MARK1:Y?")), 3);
+            double freqMHz = Math.Round(double.Parse(Inst("SpectrumAnalyzer0").Query($"CALC:MARK1:X?")) / 1_000_000, 3);
+            double TXpower = Math.Round(double.Parse(Inst("SpectrumAnalyzer0").Query($"CALC:MARK1:Y?")), 3);
             txSheet.Write(1, 3, $"2402MHz");
             txSheet.Write(2, 3, $"{freqMHz}");
             txSheet.Write(2, 4, $"{TXpower}");
 
-            SpectrumAnalyzer.Write("FREQ:CENT 4804 MHz");
-            SpectrumAnalyzer.Write("FREQ:SPAN 10 MHz");
+            Inst("SpectrumAnalyzer0").Write("FREQ:CENT 4804 MHz");
+            Inst("SpectrumAnalyzer0").Write("FREQ:SPAN 10 MHz");
             await Task.Delay(1000);
-            SpectrumAnalyzer.Write("CALC:MARK:MAX");
+            Inst("SpectrumAnalyzer0").Write("CALC:MARK:MAX");
             await Task.Delay(1000);
-            freqMHz = Math.Round(double.Parse(SpectrumAnalyzer.Query($"CALC:MARK1:X?")) / 1_000_000, 3);
-            TXpower = Math.Round(double.Parse(SpectrumAnalyzer.Query($"CALC:MARK1:Y?")), 3);
+            freqMHz = Math.Round(double.Parse(Inst("SpectrumAnalyzer0").Query($"CALC:MARK1:X?")) / 1_000_000, 3);
+            TXpower = Math.Round(double.Parse(Inst("SpectrumAnalyzer0").Query($"CALC:MARK1:Y?")), 3);
             txSheet.Write(1, 4, $"4804MHz");
             txSheet.Write(2, 4, $"{freqMHz}");
             txSheet.Write(2, 5, $"{TXpower}");
 
-            SpectrumAnalyzer.Write("FREQ:CENT 7206 MHz");
-            SpectrumAnalyzer.Write("FREQ:SPAN 10 MHz");
+            Inst("SpectrumAnalyzer0").Write("FREQ:CENT 7206 MHz");
+            Inst("SpectrumAnalyzer0").Write("FREQ:SPAN 10 MHz");
             await Task.Delay(1000);
-            SpectrumAnalyzer.Write("CALC:MARK:MAX");
+            Inst("SpectrumAnalyzer0").Write("CALC:MARK:MAX");
             await Task.Delay(1000);
-            freqMHz = Math.Round(double.Parse(SpectrumAnalyzer.Query($"CALC:MARK1:X?")) / 1_000_000, 3);
-            TXpower = Math.Round(double.Parse(SpectrumAnalyzer.Query($"CALC:MARK1:Y?")), 3);
+            freqMHz = Math.Round(double.Parse(Inst("SpectrumAnalyzer0").Query($"CALC:MARK1:X?")) / 1_000_000, 3);
+            TXpower = Math.Round(double.Parse(Inst("SpectrumAnalyzer0").Query($"CALC:MARK1:Y?")), 3);
             txSheet.Write(1, 5, $"7206MHz");
             txSheet.Write(2, 5, $"{freqMHz}");
             txSheet.Write(2, 6, $"{TXpower}");
@@ -849,35 +842,35 @@
             WriteRegister(0xDC34_003C, 40);
             await TogglePllPen();
 
-            SpectrumAnalyzer.Write("FREQ:CENT 2440 MHz");
-            SpectrumAnalyzer.Write("FREQ:SPAN 10 MHz");
+            Inst("SpectrumAnalyzer0").Write("FREQ:CENT 2440 MHz");
+            Inst("SpectrumAnalyzer0").Write("FREQ:SPAN 10 MHz");
             await Task.Delay(1000);
-            SpectrumAnalyzer.Write("CALC:MARK:MAX");
+            Inst("SpectrumAnalyzer0").Write("CALC:MARK:MAX");
             await Task.Delay(1000);
-            freqMHz = Math.Round(double.Parse(SpectrumAnalyzer.Query($"CALC:MARK1:X?")) / 1_000_000, 3);
-            TXpower = Math.Round(double.Parse(SpectrumAnalyzer.Query($"CALC:MARK1:Y?")), 3);
+            freqMHz = Math.Round(double.Parse(Inst("SpectrumAnalyzer0").Query($"CALC:MARK1:X?")) / 1_000_000, 3);
+            TXpower = Math.Round(double.Parse(Inst("SpectrumAnalyzer0").Query($"CALC:MARK1:Y?")), 3);
             txSheet.Write(1, 6, $"2440MHz");
             txSheet.Write(2, 6, $"{freqMHz}");
             txSheet.Write(3, 6, $"{TXpower}");
 
-            SpectrumAnalyzer.Write("FREQ:CENT 4880 MHz");
-            SpectrumAnalyzer.Write("FREQ:SPAN 10 MHz");
+            Inst("SpectrumAnalyzer0").Write("FREQ:CENT 4880 MHz");
+            Inst("SpectrumAnalyzer0").Write("FREQ:SPAN 10 MHz");
             await Task.Delay(1000);
-            SpectrumAnalyzer.Write("CALC:MARK:MAX");
+            Inst("SpectrumAnalyzer0").Write("CALC:MARK:MAX");
             await Task.Delay(1000);
-            freqMHz = Math.Round(double.Parse(SpectrumAnalyzer.Query($"CALC:MARK1:X?")) / 1_000_000, 3);
-            TXpower = Math.Round(double.Parse(SpectrumAnalyzer.Query($"CALC:MARK1:Y?")), 3);
+            freqMHz = Math.Round(double.Parse(Inst("SpectrumAnalyzer0").Query($"CALC:MARK1:X?")) / 1_000_000, 3);
+            TXpower = Math.Round(double.Parse(Inst("SpectrumAnalyzer0").Query($"CALC:MARK1:Y?")), 3);
             txSheet.Write(1, 7, $"4880MHz");
             txSheet.Write(2, 7, $"{freqMHz}");
             txSheet.Write(3, 7, $"{TXpower}");
 
-            SpectrumAnalyzer.Write("FREQ:CENT 7320 MHz");
-            SpectrumAnalyzer.Write("FREQ:SPAN 10 MHz");
+            Inst("SpectrumAnalyzer0").Write("FREQ:CENT 7320 MHz");
+            Inst("SpectrumAnalyzer0").Write("FREQ:SPAN 10 MHz");
             await Task.Delay(1000);
-            SpectrumAnalyzer.Write("CALC:MARK:MAX");
+            Inst("SpectrumAnalyzer0").Write("CALC:MARK:MAX");
             await Task.Delay(1000);
-            freqMHz = Math.Round(double.Parse(SpectrumAnalyzer.Query($"CALC:MARK1:X?")) / 1_000_000, 3);
-            TXpower = Math.Round(double.Parse(SpectrumAnalyzer.Query($"CALC:MARK1:Y?")), 3);
+            freqMHz = Math.Round(double.Parse(Inst("SpectrumAnalyzer0").Query($"CALC:MARK1:X?")) / 1_000_000, 3);
+            TXpower = Math.Round(double.Parse(Inst("SpectrumAnalyzer0").Query($"CALC:MARK1:Y?")), 3);
             txSheet.Write(1, 8, $"7320MHz");
             txSheet.Write(2, 8, $"{freqMHz}");
             txSheet.Write(3, 8, $"{TXpower}");
@@ -886,36 +879,36 @@
             WriteRegister(0xDC34_003C, 80);
             await TogglePllPen();
 
-            SpectrumAnalyzer.Write("FREQ:CENT 2480 MHz");
-            SpectrumAnalyzer.Write("FREQ:SPAN 10 MHz");
+            Inst("SpectrumAnalyzer0").Write("FREQ:CENT 2480 MHz");
+            Inst("SpectrumAnalyzer0").Write("FREQ:SPAN 10 MHz");
             await Task.Delay(1000);
-            SpectrumAnalyzer.Write("CALC:MARK:MAX");
+            Inst("SpectrumAnalyzer0").Write("CALC:MARK:MAX");
             await Task.Delay(1000);
-            freqMHz = Math.Round(double.Parse(SpectrumAnalyzer.Query($"CALC:MARK1:X?")) / 1_000_000, 3);
-            TXpower = Math.Round(double.Parse(SpectrumAnalyzer.Query($"CALC:MARK1:Y?")), 3);
+            freqMHz = Math.Round(double.Parse(Inst("SpectrumAnalyzer0").Query($"CALC:MARK1:X?")) / 1_000_000, 3);
+            TXpower = Math.Round(double.Parse(Inst("SpectrumAnalyzer0").Query($"CALC:MARK1:Y?")), 3);
             txSheet.Write(1, 9, $"2480MHz");
             txSheet.Write(2, 9, $"{freqMHz}");
             txSheet.Write(3, 9, $"{TXpower}");
 
-            SpectrumAnalyzer.Write("FREQ:CENT 4960 MHz");
-            SpectrumAnalyzer.Write("FREQ:SPAN 10 MHz");
+            Inst("SpectrumAnalyzer0").Write("FREQ:CENT 4960 MHz");
+            Inst("SpectrumAnalyzer0").Write("FREQ:SPAN 10 MHz");
             await Task.Delay(1000);
-            SpectrumAnalyzer.Write("CALC:MARK:MAX");
+            Inst("SpectrumAnalyzer0").Write("CALC:MARK:MAX");
             await Task.Delay(1000);
-            freqMHz = Math.Round(double.Parse(SpectrumAnalyzer.Query($"CALC:MARK1:X?")) / 1_000_000, 3);
-            TXpower = Math.Round(double.Parse(SpectrumAnalyzer.Query($"CALC:MARK1:Y?")), 3);
+            freqMHz = Math.Round(double.Parse(Inst("SpectrumAnalyzer0").Query($"CALC:MARK1:X?")) / 1_000_000, 3);
+            TXpower = Math.Round(double.Parse(Inst("SpectrumAnalyzer0").Query($"CALC:MARK1:Y?")), 3);
             txSheet.Write(1, 10, $"4960MHz");
             txSheet.Write(2, 10, $"{freqMHz}");
             txSheet.Write(3, 10, $"{TXpower}");
 
             await Task.Delay(1000);
-            SpectrumAnalyzer.Write("FREQ:CENT 7440 MHz");
-            SpectrumAnalyzer.Write("FREQ:SPAN 10 MHz");
+            Inst("SpectrumAnalyzer0").Write("FREQ:CENT 7440 MHz");
+            Inst("SpectrumAnalyzer0").Write("FREQ:SPAN 10 MHz");
             await Task.Delay(1000);
-            SpectrumAnalyzer.Write("CALC:MARK:MAX");
+            Inst("SpectrumAnalyzer0").Write("CALC:MARK:MAX");
             await Task.Delay(1000);
-            freqMHz = Math.Round(double.Parse(SpectrumAnalyzer.Query($"CALC:MARK1:X?")) / 1_000_000, 3);
-            TXpower = Math.Round(double.Parse(SpectrumAnalyzer.Query($"CALC:MARK1:Y?")), 3);
+            freqMHz = Math.Round(double.Parse(Inst("SpectrumAnalyzer0").Query($"CALC:MARK1:X?")) / 1_000_000, 3);
+            TXpower = Math.Round(double.Parse(Inst("SpectrumAnalyzer0").Query($"CALC:MARK1:Y?")), 3);
             txSheet.Write(1, 11, $"7206MHz");
             txSheet.Write(2, 11, $"{freqMHz}");
             txSheet.Write(3, 11, $"{TXpower}");
@@ -933,13 +926,13 @@
             txSheet.Write(1, 14, $"Freq [MHz]");
             txSheet.Write(2, 14, $"Power [dBm]");
 
-            SpectrumAnalyzer.Write("FREQ:CENT 2480 MHz");
-            SpectrumAnalyzer.Write("FREQ:SPAN 10 MHz");
+            Inst("SpectrumAnalyzer0").Write("FREQ:CENT 2480 MHz");
+            Inst("SpectrumAnalyzer0").Write("FREQ:SPAN 10 MHz");
             await Task.Delay(1000);
-            SpectrumAnalyzer.Write("CALC:MARK:MAX");
+            Inst("SpectrumAnalyzer0").Write("CALC:MARK:MAX");
             await Task.Delay(1000);
-            freqMHz = Math.Round(double.Parse(SpectrumAnalyzer.Query($"CALC:MARK1:X?")) / 1_000_000, 3);
-            TXpower = Math.Round(double.Parse(SpectrumAnalyzer.Query($"CALC:MARK1:Y?")), 3);
+            freqMHz = Math.Round(double.Parse(Inst("SpectrumAnalyzer0").Query($"CALC:MARK1:X?")) / 1_000_000, 3);
+            TXpower = Math.Round(double.Parse(Inst("SpectrumAnalyzer0").Query($"CALC:MARK1:Y?")), 3);
             txSheet.Write(1, 15, $"2480MHz");
             txSheet.Write(2, 15, $"{freqMHz}");
             txSheet.Write(3, 15, $"{TXpower}");
@@ -949,13 +942,13 @@
             await TogglePllPen();
             await Task.Delay(1000);
 
-            SpectrumAnalyzer.Write("FREQ:CENT 2440 MHz");
-            SpectrumAnalyzer.Write("FREQ:SPAN 10 MHz");
+            Inst("SpectrumAnalyzer0").Write("FREQ:CENT 2440 MHz");
+            Inst("SpectrumAnalyzer0").Write("FREQ:SPAN 10 MHz");
             await Task.Delay(1000);
-            SpectrumAnalyzer.Write("CALC:MARK:MAX");
+            Inst("SpectrumAnalyzer0").Write("CALC:MARK:MAX");
             await Task.Delay(1000);
-            freqMHz = Math.Round(double.Parse(SpectrumAnalyzer.Query($"CALC:MARK1:X?")) / 1_000_000, 3);
-            TXpower = Math.Round(double.Parse(SpectrumAnalyzer.Query($"CALC:MARK1:Y?")), 3);
+            freqMHz = Math.Round(double.Parse(Inst("SpectrumAnalyzer0").Query($"CALC:MARK1:X?")) / 1_000_000, 3);
+            TXpower = Math.Round(double.Parse(Inst("SpectrumAnalyzer0").Query($"CALC:MARK1:Y?")), 3);
             txSheet.Write(1, 16, $"2440MHz");
             txSheet.Write(2, 16, $"{freqMHz}");
             txSheet.Write(3, 16, $"{TXpower}");
@@ -965,13 +958,13 @@
             await TogglePllPen();
             await Task.Delay(1000);
 
-            SpectrumAnalyzer.Write("FREQ:CENT 2402 MHz");
-            SpectrumAnalyzer.Write("FREQ:SPAN 10 MHz");
+            Inst("SpectrumAnalyzer0").Write("FREQ:CENT 2402 MHz");
+            Inst("SpectrumAnalyzer0").Write("FREQ:SPAN 10 MHz");
             await Task.Delay(1000);
-            SpectrumAnalyzer.Write("CALC:MARK:MAX");
+            Inst("SpectrumAnalyzer0").Write("CALC:MARK:MAX");
             await Task.Delay(1000);
-            freqMHz = Math.Round(double.Parse(SpectrumAnalyzer.Query($"CALC:MARK1:X?")) / 1_000_000, 3);
-            TXpower = Math.Round(double.Parse(SpectrumAnalyzer.Query($"CALC:MARK1:Y?")), 3);
+            freqMHz = Math.Round(double.Parse(Inst("SpectrumAnalyzer0").Query($"CALC:MARK1:X?")) / 1_000_000, 3);
+            TXpower = Math.Round(double.Parse(Inst("SpectrumAnalyzer0").Query($"CALC:MARK1:Y?")), 3);
             txSheet.Write(1, 17, $"2402MHz");
             txSheet.Write(2, 17, $"{freqMHz}");
             txSheet.Write(3, 17, $"{TXpower}");
@@ -984,11 +977,7 @@
             if (_regCont == null)
                 throw new InvalidOperationException("RegisterControlForm is null.");
 
-            if (SpectrumAnalyzer == null)
-                throw new InvalidOperationException("SpectrumAnalyzer is not connected.");
-
-            if (SignalGenerator0 == null)
-                throw new InvalidOperationException("SpectrumAnalyzer is not connected.");
+            CheckInstruments("SpectrumAnalyzer0", "SignalGenerator0");
 
             var PLL_PEN = _regCont.RegMgr.GetRegisterItem(this, "w_PLL_PEN");            //0x0C
             var DRV_TPE = _regCont.RegMgr.GetRegisterItem(this, "O_ABB_DRV_TPE[3:0]");   //0x14
@@ -1057,27 +1046,27 @@
             PLL_PEN.Write();
             await Task.Delay(500);
             */
-            SignalGenerator0.Write("OUTP ON");                  //ESG RF off //SignalGenerator0으로 설정 필요.
-            SignalGenerator0.Write("OUTP:MOD OFF");             //ESG RF off //SignalGenerator0으로 설정 필요.
-            SignalGenerator0.Write("POW:LEV -80DBM");           //ESG RF off //SignalGenerator0으로 설정 필요.
-            SignalGenerator0.Write("FREQ 2402 MHz");            //ESG RF off //SignalGenerator0으로 설정 필요.
-            SpectrumAnalyzer.Write("DISP:TRAC:Y:RLEV 20dBm");
-            SpectrumAnalyzer.Write("INP:COUP DC");
-            SpectrumAnalyzer.Write("FREQ:CENT 5 MHz");
-            SpectrumAnalyzer.Write("FREQ:SPAN 10 MHz");
-            SpectrumAnalyzer.Write("DISP:TRAC1:MODE AVER");
+            Inst("SignalGenerator0").Write("OUTP ON");                  //ESG RF off //SignalGenerator0으로 설정 필요.
+            Inst("SignalGenerator0").Write("OUTP:MOD OFF");             //ESG RF off //SignalGenerator0으로 설정 필요.
+            Inst("SignalGenerator0").Write("POW:LEV -80DBM");           //ESG RF off //SignalGenerator0으로 설정 필요.
+            Inst("SignalGenerator0").Write("FREQ 2402 MHz");            //ESG RF off //SignalGenerator0으로 설정 필요.
+            Inst("SpectrumAnalyzer0").Write("DISP:TRAC:Y:RLEV 20dBm");
+            Inst("SpectrumAnalyzer0").Write("INP:COUP DC");
+            Inst("SpectrumAnalyzer0").Write("FREQ:CENT 5 MHz");
+            Inst("SpectrumAnalyzer0").Write("FREQ:SPAN 10 MHz");
+            Inst("SpectrumAnalyzer0").Write("DISP:TRAC1:MODE AVER");
 
             uint[] ch_sel = { 2, 26, 40, 80 };
             for (int i = 0; i < ch_sel.Length; i++)
             {
 
-                SignalGenerator0.Write("POW:LEV -80DBM");       //ESG RF off //SignalGenerator0으로 설정 필요.
+                Inst("SignalGenerator0").Write("POW:LEV -80DBM");       //ESG RF off //SignalGenerator0으로 설정 필요.
 
                 rxSheet.Write(2 + i * 2, 3, $"{2400 + ch_sel[i]}");
                 DRV_TPE.Read();
                 DRV_TPE.Value = 9;
                 DRV_TPE.Write();
-                SignalGenerator0.Write($"FREQ {2400 + ch_sel[i]}E6");
+                Inst("SignalGenerator0").Write($"FREQ {2400 + ch_sel[i]}E6");
 
                 rxSheet.Write(2 + i * 2, 4, $"TIA output");
                 rxSheet.Write(3 + i * 2, 4, $"PGA output");
@@ -1086,17 +1075,17 @@
                 SPI_CH_SEL.Value = ch_sel[i];
                 SPI_CH_SEL.Write();
                 await Task.Delay(1000);
-                SpectrumAnalyzer.Write("CALC:MARK:MAX");
+                Inst("SpectrumAnalyzer0").Write("CALC:MARK:MAX");
                 await Task.Delay(1000);
                 //Pout 측정
-                double TonePower = Math.Round(double.Parse(SpectrumAnalyzer.Query($"CALC:MARK1:Y?")), 3);
+                double TonePower = Math.Round(double.Parse(Inst("SpectrumAnalyzer0").Query($"CALC:MARK1:Y?")), 3);
                 rxSheet.Write(2 + i * 2, 9, $"{TonePower}");
 
                 await Task.Delay(1000);
-                SignalGenerator0.Write("OUTP OFF"); //ESG RF off //SignalGenerator0으로 설정 필요.
-                SpectrumAnalyzer.Write("CALC1:MARK1:FUNC:BPOW:SPAN 1000000");
+                Inst("SignalGenerator0").Write("OUTP OFF"); //ESG RF off //SignalGenerator0으로 설정 필요.
+                Inst("SpectrumAnalyzer0").Write("CALC1:MARK1:FUNC:BPOW:SPAN 1000000");
                 await Task.Delay(1000);
-                TonePower = Math.Round(double.Parse(SpectrumAnalyzer.Query($"CALC:MARK:FUNC:BPOW:RES?")), 3);
+                TonePower = Math.Round(double.Parse(Inst("SpectrumAnalyzer0").Query($"CALC:MARK:FUNC:BPOW:RES?")), 3);
                 rxSheet.Write(2 + i * 2, 7, $"{TonePower}");
                 //Nout 측정
 
@@ -1106,14 +1095,14 @@
                 DRV_TPE.Write();
 
                 await Task.Delay(1000);
-                TonePower = Math.Round(double.Parse(SpectrumAnalyzer.Query($"CALC:MARK:FUNC:BPOW:RES?")), 3);
+                TonePower = Math.Round(double.Parse(Inst("SpectrumAnalyzer0").Query($"CALC:MARK:FUNC:BPOW:RES?")), 3);
                 rxSheet.Write(3 + i * 2, 7, $"{TonePower}");
                 await Task.Delay(1000);
 
-                SignalGenerator0.Write("OUTP ON"); //ESG RF off //SignalGenerator0으로 설정 필요.
+                Inst("SignalGenerator0").Write("OUTP ON"); //ESG RF off //SignalGenerator0으로 설정 필요.
                 await Task.Delay(1000);
-                SpectrumAnalyzer.Write("CALC:MARK:MAX");
-                TonePower = Math.Round(double.Parse(SpectrumAnalyzer.Query($"CALC:MARK1:Y?")), 3);
+                Inst("SpectrumAnalyzer0").Write("CALC:MARK:MAX");
+                TonePower = Math.Round(double.Parse(Inst("SpectrumAnalyzer0").Query($"CALC:MARK1:Y?")), 3);
                 rxSheet.Write(3 + i * 2, 9, $"{TonePower}");
             }
 
@@ -1135,20 +1124,20 @@
                     DRV_TPE.Write();
                     await Task.Delay(1000);
 
-                    SignalGenerator0.Write("POW:LEV -70DBM"); //ESG RF off //SignalGenerator0으로 설정 필요.
+                    Inst("SignalGenerator0").Write("POW:LEV -70DBM"); //ESG RF off //SignalGenerator0으로 설정 필요.
                     RX_RF_GC.Read();
                     //RX_RF_GC.Value = 다음주!! 수정
                     RX_RF_GC.Write();
-                    SignalGenerator0.Write($"FREQ {2400 + ch_sell[i]}E6");
+                    Inst("SignalGenerator0").Write($"FREQ {2400 + ch_sell[i]}E6");
                     rxSheet.Write(2 + i, 15, $"{2400 + ch_sell[i]}");
                     SPI_CH_SEL.Read();
                     SPI_CH_SEL.Value = ch_sell[i];
                     SPI_CH_SEL.Write();
                     await Task.Delay(1000);
-                    SpectrumAnalyzer.Write("CALC:MARK:MAX");
+                    Inst("SpectrumAnalyzer0").Write("CALC:MARK:MAX");
                     await Task.Delay(1000);
                     //Pout 측정
-                    double TonePower = Math.Round(double.Parse(SpectrumAnalyzer.Query($"CALC:MARK1:Y?")), 3);
+                    double TonePower = Math.Round(double.Parse(Inst("SpectrumAnalyzer0").Query($"CALC:MARK1:Y?")), 3);
                     rxSheet.Write(2 + i, 18 + GC * 4, $"{TonePower}");
                 }
             }

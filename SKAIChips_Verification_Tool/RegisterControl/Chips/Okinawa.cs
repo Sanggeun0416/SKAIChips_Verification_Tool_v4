@@ -321,11 +321,10 @@
         [ChipTest("AUTO", "Version Select", "Start Version Select Test Sequence.")]
         private async Task RunVersionSelectTest(RunTestContext ctx, CancellationToken ct)
         {
-            if (PowerSupply0 == null || DigitalMultimeter0 == null)
-                throw new InvalidOperationException("PowerSupply0 or DMM0 is not connected.");
-
             if (!(_bus is IGpioController gpio))
                 throw new InvalidOperationException("Current Bus does not support GPIO Control.");
+
+            CheckInstruments("PowerSupply0", "DigitalMultimeter0");
 
             IReportSheet verSheet;
             int y_pos = 2;
@@ -366,12 +365,12 @@
                 verSheet.AutoFit();
             }
 
-            PowerSupply0.Write("OUTP OFF,(@1:3)");
+            Inst("PowerSupply0").Write("OUTP OFF,(@1:3)");
             await Task.Delay(100, ct);
 
-            PowerSupply0.Write("VOLT 1.8,(@1)"); // VPP
-            PowerSupply0.Write("VOLT 5.0,(@2)"); // VREF CP_EN
-            PowerSupply0.Write("VOLT 8.0,(@3)"); // VCC
+            Inst("PowerSupply0").Write("VOLT 1.8,(@1)"); // VPP
+            Inst("PowerSupply0").Write("VOLT 5.0,(@2)"); // VREF CP_EN
+            Inst("PowerSupply0").Write("VOLT 8.0,(@3)"); // VCC
             await Task.Delay(100, ct);
 
             gpio.SetGpioDirection(8, true);
@@ -396,19 +395,19 @@
 
                 try
                 {
-                    PowerSupply0.Write("OUTP ON,(@3)"); // VCC
+                    Inst("PowerSupply0").Write("OUTP ON,(@3)"); // VCC
                     await Task.Delay(500, ct);
 
-                    PowerSupply0.Write("OUTP ON,(@1)"); // VPP
+                    Inst("PowerSupply0").Write("OUTP ON,(@1)"); // VPP
                     await Task.Delay(1000, ct);
 
-                    PowerSupply0.Write("OUTP ON,(@2)"); // VREF CP_EN
+                    Inst("PowerSupply0").Write("OUTP ON,(@2)"); // VREF CP_EN
                     await Task.Delay(500, ct);
 
                     gpio.SetGpioValue(8, true);     // High
                     await Task.Delay(500, ct);
 
-                    string resp = DigitalMultimeter0.Query(":MEAS:VOLT:DC?");
+                    string resp = Inst("DigitalMultimeter0").Query(":MEAS:VOLT:DC?");
                     if (!double.TryParse(resp, out double VRT_VAL))
                     {
                         VRT_VAL = 0.0;
@@ -417,9 +416,9 @@
 
                     await Task.Delay(500, ct);
 
-                    PowerSupply0.Write("OUTP OFF,(@2)"); // VREF
-                    PowerSupply0.Write("OUTP OFF,(@1)"); // VPP
-                    PowerSupply0.Write("OUTP OFF,(@3)"); // VCC
+                    Inst("PowerSupply0").Write("OUTP OFF,(@2)"); // VREF
+                    Inst("PowerSupply0").Write("OUTP OFF,(@1)"); // VPP
+                    Inst("PowerSupply0").Write("OUTP OFF,(@3)"); // VCC
 
                     gpio.SetGpioValue(8, false); // Low
                     await Task.Delay(100, ct);
@@ -467,7 +466,7 @@
                     AppendLog("ERROR", $"Test Failed: {ex.Message}");
                     try
                     {
-                        PowerSupply0.Write("OUTP OFF,(@1:3)");
+                        Inst("PowerSupply0").Write("OUTP OFF,(@1:3)");
                     }
                     catch { }
                     if (ShowMsg($"Error occurred: {ex.Message}\nContinue?", "Error", MessageBoxButtons.YesNo, MessageBoxIcon.Error) != DialogResult.Yes)
@@ -480,9 +479,6 @@
 
         private async Task RunCalFs5vAdimFsfTest(RunTestContext ctx, CancellationToken ct, int? num = null)
         {
-            if (PowerSupply0 == null || PowerSupply1 == null || PowerSupply2 == null ||
-                DigitalMultimeter0 == null || OscilloScope0 == null || SignalGenerator0 == null)
-                throw new InvalidOperationException("All required instruments (PS0-2, DMM0, OSC0, SG0) must be connected.");
 
             if (_regCont?.RegMgr == null)
                 throw new InvalidOperationException("Register Map is not loaded.");
@@ -490,6 +486,8 @@
                 throw new InvalidOperationException("GPIO Control is not supported.");
             if (I2cBus == null)
                 throw new InvalidOperationException("I2cBus is not connected.");
+
+            CheckInstruments("PowerSupply0", "PowerSupply1", "PowerSupply2", "DigitalMultimeter0", "OscilloScope0", "SignalGenerator0");
 
             int actualNum;
             IReportSheet calSheet;
@@ -528,17 +526,17 @@
             int y_pos = actualNum;
             double VREF = 0, CS_Voltage = 0, GATE_ON = 0, OFF_TIME = 0;
 
-            PowerSupply0.Write("OUTP OFF,(@2:3)");
-            PowerSupply1.Write("OUTP OFF,(@2:3)");
-            PowerSupply2.Write("OUTP OFF,(@1:3)");
+            Inst("PowerSupply0").Write("OUTP OFF,(@2:3)");
+            Inst("PowerSupply1").Write("OUTP OFF,(@2:3)");
+            Inst("PowerSupply2").Write("OUTP OFF,(@1:3)");
             await Task.Delay(1, ct);
 
-            PowerSupply0.Write("VOLT 13.0,(@2)");
-            PowerSupply2.Write("VOLT 1.8,(@3)");
-            PowerSupply0.Write("VOLT 0.2,(@3)");
-            PowerSupply1.Write("VOLT 1.5,(@2)");
-            PowerSupply1.Write("VOLT 3.3,(@3)");
-            PowerSupply2.Write("VOLT 5.0,(@1)");
+            Inst("PowerSupply0").Write("VOLT 13.0,(@2)");
+            Inst("PowerSupply2").Write("VOLT 1.8,(@3)");
+            Inst("PowerSupply0").Write("VOLT 0.2,(@3)");
+            Inst("PowerSupply1").Write("VOLT 1.5,(@2)");
+            Inst("PowerSupply1").Write("VOLT 3.3,(@3)");
+            Inst("PowerSupply2").Write("VOLT 5.0,(@1)");
             await Task.Delay(10, ct);
 
             gpio.SetGpioDirection(8, true);
@@ -554,29 +552,29 @@
                 else
                     return;
 
-                PowerSupply0.Write("VOLT 13.0,(@2)");
-                PowerSupply2.Write("VOLT 5.5,(@3)");
-                PowerSupply0.Write("VOLT 0.2,(@3)");
-                PowerSupply1.Write("VOLT 1.5,(@2)");
-                PowerSupply1.Write("VOLT 3.3,(@3)");
-                PowerSupply2.Write("VOLT 5.0,(@1)");
+                Inst("PowerSupply0").Write("VOLT 13.0,(@2)");
+                Inst("PowerSupply2").Write("VOLT 5.5,(@3)");
+                Inst("PowerSupply0").Write("VOLT 0.2,(@3)");
+                Inst("PowerSupply1").Write("VOLT 1.5,(@2)");
+                Inst("PowerSupply1").Write("VOLT 3.3,(@3)");
+                Inst("PowerSupply2").Write("VOLT 5.0,(@1)");
                 await Task.Delay(10, ct);
 
-                PowerSupply0.Write("OUTP ON,(@2:3)");
-                PowerSupply1.Write("OUTP ON,(@2:3)");
-                PowerSupply2.Write("OUTP ON,(@1:3)");
+                Inst("PowerSupply0").Write("OUTP ON,(@2:3)");
+                Inst("PowerSupply1").Write("OUTP ON,(@2:3)");
+                Inst("PowerSupply2").Write("OUTP ON,(@1:3)");
                 await Task.Delay(100, ct);
 
                 gpio.SetGpioValue(8, false);
                 gpio.SetGpioValue(9, true);
 
-                PowerSupply2.Write("VOLT 8.75,(@3)");
+                Inst("PowerSupply2").Write("VOLT 8.75,(@3)");
                 await Task.Delay(500, ct);
 
                 CommandEraseFlash();
                 await Task.Delay(300, ct);
 
-                PowerSupply2.Write("VOLT 5.5,(@3)");
+                Inst("PowerSupply2").Write("VOLT 5.5,(@3)");
                 await Task.Delay(500, ct);
 
                 for (int Address = 0x30; Address <= 0x37; Address++)
@@ -598,7 +596,7 @@
                 for (uint i = 0x01; i <= 0x08; i++)
                     ReadRegister(i);
 
-                PowerSupply2.Write("VOLT 8.75,(@3)");
+                Inst("PowerSupply2").Write("VOLT 8.75,(@3)");
                 await Task.Delay(500, ct);
 
                 SendBytes.AddRange(new byte[] { 0x00, 0x10, 0x00, 0x00 });
@@ -606,7 +604,7 @@
                 SendBytes.Clear();
                 await Task.Delay(500, ct);
 
-                PowerSupply2.Write("VOLT 5.5,(@3)");
+                Inst("PowerSupply2").Write("VOLT 5.5,(@3)");
                 await Task.Delay(500, ct);
 
                 byte[] flashDefaults = { 0x9F, 0x54, 0x8D, 0x82, 0x68, 0xC4, 0x24, 0xB0 };
@@ -633,7 +631,7 @@
                 FS5V.Write();
 
                 await Task.Delay(100, ct);
-                VREF = double.Parse(DigitalMultimeter0.Query(":MEAS:VOLT:DC?"));
+                VREF = double.Parse(Inst("DigitalMultimeter0").Query(":MEAS:VOLT:DC?"));
                 double VREF_Delta = VREF_Target - VREF;
 
                 calSheet.Write(3, y_pos, VREF.ToString("F3"));
@@ -670,7 +668,7 @@
                     FS5V.Read();
 
                     await Task.Delay(100, ct);
-                    VREF = double.Parse(DigitalMultimeter0.Query(":MEAS:VOLT:DC?"));
+                    VREF = double.Parse(Inst("DigitalMultimeter0").Query(":MEAS:VOLT:DC?"));
                     VREF_Delta = VREF_Target - VREF;
 
                     if (VREF_Delta >= -0.01 && VREF_Delta < 0.01)
@@ -681,15 +679,15 @@
                 calSheet.Write(2, y_pos, val_fs5v.ToString());
                 calSheet.Write(4, y_pos, VREF.ToString("F4"));
 
-                PowerSupply0.Write("VOLT 0.2,(@3)");
-                PowerSupply1.Write("VOLT 3.3,(@3)");
+                Inst("PowerSupply0").Write("VOLT 0.2,(@3)");
+                Inst("PowerSupply1").Write("VOLT 3.3,(@3)");
                 await Task.Delay(10, ct);
-                PowerSupply0.Write("VOLT 0.0,(@3)");
-                PowerSupply2.Write("VOLT 5.5,(@3)");
+                Inst("PowerSupply0").Write("VOLT 0.0,(@3)");
+                Inst("PowerSupply2").Write("VOLT 5.5,(@3)");
                 await Task.Delay(10, ct);
 
-                OscilloScope0.Write(":TIM:SCAL 5E-3");
-                OscilloScope0.Write(":RUN");
+                Inst("OscilloScope0").Write(":TIM:SCAL 5E-3");
+                Inst("OscilloScope0").Write(":RUN");
                 await Task.Delay(100, ct);
 
                 gpio.SetGpioValue(8, false);
@@ -698,10 +696,10 @@
                 val_FSF = 2;
                 FSF.Value = val_FSF;
                 FSF.Write();
-                PowerSupply2.Write("VOLT 1.8,(@3)");
+                Inst("PowerSupply2").Write("VOLT 1.8,(@3)");
                 await Task.Delay(10, ct);
 
-                OFF_TIME = double.Parse(OscilloScope0.Query(":MEAS:NWIDth? CHAN1")) * 1E+3;
+                OFF_TIME = double.Parse(Inst("OscilloScope0").Query(":MEAS:NWIDth? CHAN1")) * 1E+3;
                 double FSF_Delta = FSF_Target - OFF_TIME;
 
                 calSheet.Write(12, y_pos, OFF_TIME.ToString("F3"));
@@ -723,14 +721,14 @@
 
                     gpio.SetGpioValue(8, false);
                     gpio.SetGpioValue(9, true);
-                    PowerSupply2.Write("VOLT 5.5,(@3)");
+                    Inst("PowerSupply2").Write("VOLT 5.5,(@3)");
                     await Task.Delay(10, ct);
                     FSF.Value = val_FSF;
                     FSF.Write();
-                    PowerSupply2.Write("VOLT 1.8,(@3)");
+                    Inst("PowerSupply2").Write("VOLT 1.8,(@3)");
                     await Task.Delay(10, ct);
 
-                    OFF_TIME = double.Parse(OscilloScope0.Query(":MEAS:NWIDth? CHAN1")) * 1E+3;
+                    OFF_TIME = double.Parse(Inst("OscilloScope0").Query(":MEAS:NWIDth? CHAN1")) * 1E+3;
                     FSF_Delta = FSF_Target - OFF_TIME;
 
                     if (FSF_Delta >= -0.25 && FSF_Delta < 0.25)
@@ -740,19 +738,19 @@
                 calSheet.Write(11, y_pos, val_FSF.ToString());
                 calSheet.Write(13, y_pos, OFF_TIME.ToString("F4"));
 
-                PowerSupply1.Write("VOLT 3.3,(@3)");
-                PowerSupply0.Write("VOLT 0,(@3)");
+                Inst("PowerSupply1").Write("VOLT 3.3,(@3)");
+                Inst("PowerSupply0").Write("VOLT 0,(@3)");
 
-                SignalGenerator0.Write("SOURce1:FUNC SQU");
-                SignalGenerator0.Write("SOURce1:VOLTage 0.5");
-                SignalGenerator0.Write("SOURce1:VOLTage:OFFSet 0.25");
-                SignalGenerator0.Write("SOURce1:FREQ 10000");
-                SignalGenerator0.Write("OUTP:STAT ON");
-                OscilloScope0.Write(":TIM:SCAL 2E-3");
+                Inst("SignalGenerator0").Write("SOURce1:FUNC SQU");
+                Inst("SignalGenerator0").Write("SOURce1:VOLTage 0.5");
+                Inst("SignalGenerator0").Write("SOURce1:VOLTage:OFFSet 0.25");
+                Inst("SignalGenerator0").Write("SOURce1:FREQ 10000");
+                Inst("SignalGenerator0").Write("OUTP:STAT ON");
+                Inst("OscilloScope0").Write(":TIM:SCAL 2E-3");
 
                 await Task.Delay(1000, ct);
 
-                PowerSupply2.Write("VOLT 5.5,(@3)");
+                Inst("PowerSupply2").Write("VOLT 5.5,(@3)");
                 await Task.Delay(10, ct);
                 gpio.SetGpioValue(8, false);
                 gpio.SetGpioValue(9, true);
@@ -774,24 +772,24 @@
                 gpio.SetGpioValue(9, false);
                 await Task.Delay(100, ct);
 
-                PowerSupply0.Write("VOLT 1.35,(@3)");
-                PowerSupply1.Write("VOLT 3.3,(@3)");
-                PowerSupply2.Write("VOLT 1.8,(@3)");
+                Inst("PowerSupply0").Write("VOLT 1.35,(@3)");
+                Inst("PowerSupply1").Write("VOLT 3.3,(@3)");
+                Inst("PowerSupply2").Write("VOLT 1.8,(@3)");
                 await Task.Delay(10, ct);
 
                 for (CS_Voltage = 1.4; CS_Voltage >= 1.1; CS_Voltage -= 0.002)
                 {
                     ct.ThrowIfCancellationRequested();
-                    PowerSupply0.Write($"VOLT {CS_Voltage},(@3)");
+                    Inst("PowerSupply0").Write($"VOLT {CS_Voltage},(@3)");
                     await Task.Delay(100, ct);
                     ADIM_Min = 65535;
                     ADIM_Max = 400;
 
                     for (int j = 0; j < 10; j++)
                     {
-                        OscilloScope0.Write(":SING");
+                        Inst("OscilloScope0").Write(":SING");
                         await Task.Delay(300, ct);
-                        GATE_ON = double.Parse(OscilloScope0.Query(":MEAS:PPUL? CHAN1"));
+                        GATE_ON = double.Parse(Inst("OscilloScope0").Query(":MEAS:PPUL? CHAN1"));
 
                         if (ADIM_Min > GATE_ON)
                             ADIM_Min = GATE_ON;
@@ -853,10 +851,10 @@
                     else if (ADIMH_Delta >= -0.0064 && ADIMH_Delta < 0.0064)
                         break;
 
-                    PowerSupply2.Write("VOLT 5.5,(@3)");
+                    Inst("PowerSupply2").Write("VOLT 5.5,(@3)");
                     await Task.Delay(10, ct);
-                    PowerSupply1.Write("VOLT 3.3,(@3)");
-                    PowerSupply0.Write("VOLT 0,(@3)");
+                    Inst("PowerSupply1").Write("VOLT 3.3,(@3)");
+                    Inst("PowerSupply0").Write("VOLT 0,(@3)");
 
                     gpio.SetGpioValue(8, false);
                     gpio.SetGpioValue(9, true);
@@ -871,24 +869,24 @@
                     gpio.SetGpioValue(8, true);
                     await Task.Delay(10, ct);
 
-                    PowerSupply2.Write("VOLT 1.8,(@3)");
+                    Inst("PowerSupply2").Write("VOLT 1.8,(@3)");
                     await Task.Delay(10, ct);
-                    PowerSupply1.Write("VOLT 3.3,(@3)");
+                    Inst("PowerSupply1").Write("VOLT 3.3,(@3)");
                     await Task.Delay(10, ct);
 
                     for (CS_Voltage = 1.4; CS_Voltage >= 1.1; CS_Voltage -= 0.002)
                     {
                         ct.ThrowIfCancellationRequested();
-                        PowerSupply0.Write($"VOLT {CS_Voltage},(@3)");
+                        Inst("PowerSupply0").Write($"VOLT {CS_Voltage},(@3)");
                         await Task.Delay(10, ct);
 
                         ADIM_Min = 65535;
                         ADIM_Max = 400;
                         for (int j = 0; j < 10; j++)
                         {
-                            OscilloScope0.Write(":SING");
+                            Inst("OscilloScope0").Write(":SING");
                             await Task.Delay(300, ct);
-                            GATE_ON = double.Parse(OscilloScope0.Query(":MEAS:PPUL? CHAN1"));
+                            GATE_ON = double.Parse(Inst("OscilloScope0").Query(":MEAS:PPUL? CHAN1"));
 
                             if (ADIM_Min > GATE_ON)
                                 ADIM_Min = GATE_ON;
@@ -927,10 +925,10 @@
                 calSheet.Write(7, y_pos, CS_Voltage.ToString("F4"));
                 calSheet.Write(16, y_pos, GATE_ON.ToString("F4"));
 
-                OscilloScope0.Write(":RUN");
-                PowerSupply0.Write("VOLT 0.6,(@3)");
-                PowerSupply1.Write("VOLT 0.0,(@3)");
-                PowerSupply2.Write("VOLT 1.8,(@3)");
+                Inst("OscilloScope0").Write(":RUN");
+                Inst("PowerSupply0").Write("VOLT 0.6,(@3)");
+                Inst("PowerSupply1").Write("VOLT 0.0,(@3)");
+                Inst("PowerSupply2").Write("VOLT 1.8,(@3)");
                 await Task.Delay(10, ct);
 
                 gpio.SetGpioValue(8, true);
@@ -940,16 +938,16 @@
                 for (CS_Voltage = 0.6; CS_Voltage >= 0.4; CS_Voltage -= 0.002)
                 {
                     ct.ThrowIfCancellationRequested();
-                    PowerSupply0.Write($"VOLT {CS_Voltage},(@3)");
+                    Inst("PowerSupply0").Write($"VOLT {CS_Voltage},(@3)");
                     await Task.Delay(10, ct);
 
                     ADIM_Min = 65535;
                     ADIM_Max = 400;
                     for (int j = 0; j < 20; j++)
                     {
-                        OscilloScope0.Write(":SING");
+                        Inst("OscilloScope0").Write(":SING");
                         await Task.Delay(500, ct);
-                        GATE_ON = double.Parse(OscilloScope0.Query(":MEAS:PPUL? CHAN1"));
+                        GATE_ON = double.Parse(Inst("OscilloScope0").Query(":MEAS:PPUL? CHAN1"));
 
                         if (ADIM_Min > GATE_ON)
                             ADIM_Min = GATE_ON;
@@ -1006,7 +1004,7 @@
                     else if (ADIML_Delta >= -0.0034 && ADIML_Delta < 0.0034)
                         break;
 
-                    PowerSupply2.Write("VOLT 5.5,(@3)");
+                    Inst("PowerSupply2").Write("VOLT 5.5,(@3)");
                     await Task.Delay(10, ct);
 
                     gpio.SetGpioValue(8, false);
@@ -1020,21 +1018,21 @@
                     gpio.SetGpioValue(8, true);
                     gpio.SetGpioValue(9, false);
 
-                    PowerSupply2.Write("VOLT 1.8,(@3)");
+                    Inst("PowerSupply2").Write("VOLT 1.8,(@3)");
                     await Task.Delay(10, ct);
 
                     for (CS_Voltage = 0.6; CS_Voltage >= 0.4; CS_Voltage -= 0.002)
                     {
                         ct.ThrowIfCancellationRequested();
-                        PowerSupply0.Write($"VOLT {CS_Voltage},(@3)");
+                        Inst("PowerSupply0").Write($"VOLT {CS_Voltage},(@3)");
                         await Task.Delay(10, ct);
                         ADIM_Min = 65535;
                         ADIM_Max = 400;
                         for (int j = 0; j < 20; j++)
                         {
-                            OscilloScope0.Write(":SING");
+                            Inst("OscilloScope0").Write(":SING");
                             await Task.Delay(500, ct);
-                            GATE_ON = double.Parse(OscilloScope0.Query(":MEAS:PPUL? CHAN1"));
+                            GATE_ON = double.Parse(Inst("OscilloScope0").Query(":MEAS:PPUL? CHAN1"));
 
                             if (ADIM_Min > GATE_ON)
                                 ADIM_Min = GATE_ON;
@@ -1075,7 +1073,7 @@
                 gpio.SetGpioValue(8, false);
                 gpio.SetGpioValue(9, true);
 
-                PowerSupply2.Write("VOLT 8.75,(@3)");
+                Inst("PowerSupply2").Write("VOLT 8.75,(@3)");
                 await Task.Delay(500, ct);
 
                 SendBytes.AddRange(new byte[] { 0x00, 0x10, 0x00, 0x00 });
@@ -1083,7 +1081,7 @@
                 SendBytes.Clear();
                 await Task.Delay(300, ct);
 
-                PowerSupply2.Write("VOLT 5.5,(@3)");
+                Inst("PowerSupply2").Write("VOLT 5.5,(@3)");
                 await Task.Delay(500, ct);
 
                 for (int Address = 0x30; Address <= 0x37; Address++)
@@ -1102,14 +1100,14 @@
                 for (uint i = 0x01; i <= 0x08; i++)
                     ReadRegister(i);
 
-                PowerSupply2.Write("VOLT 8.75,(@3)");
+                Inst("PowerSupply2").Write("VOLT 8.75,(@3)");
                 await Task.Delay(500, ct);
                 SendBytes.AddRange(new byte[] { 0x00, 0x10, 0x00, 0x00 });
                 I2cBus.Write(DeviceAddress, SendBytes.ToArray(), true);
                 SendBytes.Clear();
                 await Task.Delay(500, ct);
 
-                PowerSupply2.Write("VOLT 5.5,(@3)");
+                Inst("PowerSupply2").Write("VOLT 5.5,(@3)");
                 await Task.Delay(500, ct);
                 for (int Address = 0x30; Address <= 0x37; Address++)
                 {
@@ -1154,9 +1152,9 @@
                 for (uint i = 0x01; i <= 0x08; i++)
                     ReadRegister(i);
 
-                PowerSupply0.Write("OUTP OFF,(@2:3)");
-                PowerSupply1.Write("OUTP OFF,(@2:3)");
-                PowerSupply2.Write("OUTP OFF,(@1:3)");
+                Inst("PowerSupply0").Write("OUTP OFF,(@2:3)");
+                Inst("PowerSupply1").Write("OUTP OFF,(@2:3)");
+                Inst("PowerSupply2").Write("OUTP OFF,(@1:3)");
 
                 gpio.SetGpioValue(8, false);
                 gpio.SetGpioValue(9, false);
@@ -1165,13 +1163,12 @@
 
         private async Task RunVccCurrentTest(RunTestContext ctx, CancellationToken ct, int? num = null)
         {
-            if (PowerSupply0 == null || PowerSupply1 == null || PowerSupply2 == null)
-                throw new InvalidOperationException("All required instruments (PS0-2) must be connected.");
-
             if (_regCont?.RegMgr == null)
                 throw new InvalidOperationException("Register Map is not loaded.");
             if (!(_bus is IGpioController gpio))
                 throw new InvalidOperationException("GPIO Control is not supported.");
+
+            CheckInstruments("PowerSupply0", "PowerSupply1", "PowerSupply2");
 
             IReportSheet singleSheet;
             try
@@ -1193,57 +1190,57 @@
 
             int y_pos = actualNum;
 
-            PowerSupply0.Write("SENS:CURR:RANG 10E-3,(@2)");
-            PowerSupply0.Write("OUTP OFF,(@2)");
-            PowerSupply2.Write("OUTP OFF,(@3)");
-            PowerSupply0.Write("OUTP OFF,(@3)");
-            PowerSupply1.Write("OUTP OFF,(@2)");
-            PowerSupply1.Write("OUTP OFF,(@3)");
-            PowerSupply2.Write("OUTP OFF,(@1)");
+            Inst("PowerSupply0").Write("SENS:CURR:RANG 10E-3,(@2)");
+            Inst("PowerSupply0").Write("OUTP OFF,(@2)");
+            Inst("PowerSupply2").Write("OUTP OFF,(@3)");
+            Inst("PowerSupply0").Write("OUTP OFF,(@3)");
+            Inst("PowerSupply1").Write("OUTP OFF,(@2)");
+            Inst("PowerSupply1").Write("OUTP OFF,(@3)");
+            Inst("PowerSupply2").Write("OUTP OFF,(@1)");
             await Task.Delay(1, ct);
 
-            PowerSupply0.Write("VOLT 0.0,(@2)");
-            PowerSupply2.Write("VOLT 0.0,(@3)");
-            PowerSupply0.Write("VOLT 0.0,(@3)");
-            PowerSupply1.Write("VOLT 0.0,(@2)");
-            PowerSupply1.Write("VOLT 0.0,(@3)");
-            PowerSupply2.Write("VOLT 0.0,(@1)");
+            Inst("PowerSupply0").Write("VOLT 0.0,(@2)");
+            Inst("PowerSupply2").Write("VOLT 0.0,(@3)");
+            Inst("PowerSupply0").Write("VOLT 0.0,(@3)");
+            Inst("PowerSupply1").Write("VOLT 0.0,(@2)");
+            Inst("PowerSupply1").Write("VOLT 0.0,(@3)");
+            Inst("PowerSupply2").Write("VOLT 0.0,(@1)");
             await Task.Delay(10, ct);
 
-            PowerSupply0.Write("VOLT 6.4,(@2)");
-            PowerSupply2.Write("VOLT 1.8,(@3)");
-            PowerSupply0.Write("VOLT 0.2,(@3)");
-            PowerSupply1.Write("VOLT 1.5,(@2)");
-            PowerSupply1.Write("VOLT 1.5,(@3)");
-            PowerSupply2.Write("VOLT 5.0,(@1)");
+            Inst("PowerSupply0").Write("VOLT 6.4,(@2)");
+            Inst("PowerSupply2").Write("VOLT 1.8,(@3)");
+            Inst("PowerSupply0").Write("VOLT 0.2,(@3)");
+            Inst("PowerSupply1").Write("VOLT 1.5,(@2)");
+            Inst("PowerSupply1").Write("VOLT 1.5,(@3)");
+            Inst("PowerSupply2").Write("VOLT 5.0,(@1)");
             await Task.Delay(10, ct);
 
-            PowerSupply0.Write("OUTP ON,(@2)");
-            PowerSupply2.Write("OUTP ON,(@3)");
-            PowerSupply0.Write("OUTP ON,(@3)");
-            PowerSupply1.Write("OUTP ON,(@2)");
-            PowerSupply1.Write("OUTP ON,(@3)");
-            PowerSupply2.Write("OUTP ON,(@1)");
+            Inst("PowerSupply0").Write("OUTP ON,(@2)");
+            Inst("PowerSupply2").Write("OUTP ON,(@3)");
+            Inst("PowerSupply0").Write("OUTP ON,(@3)");
+            Inst("PowerSupply1").Write("OUTP ON,(@2)");
+            Inst("PowerSupply1").Write("OUTP ON,(@3)");
+            Inst("PowerSupply2").Write("OUTP ON,(@1)");
 
             gpio.SetGpioDirection(8, true);
             gpio.SetGpioDirection(9, false);
             await Task.Delay(100, ct);
 
-            double IST = double.Parse(PowerSupply0.Query("MEAS:CURR? (@2)")) * 1000000;
+            double IST = double.Parse(Inst("PowerSupply0").Query("MEAS:CURR? (@2)")) * 1000000;
             await Task.Delay(500, ct);
 
-            PowerSupply0.Write("VOLT 13.0,(@2)");
-            PowerSupply0.Write("SENS:CURR:RANG AUTO,(@2)");
+            Inst("PowerSupply0").Write("VOLT 13.0,(@2)");
+            Inst("PowerSupply0").Write("SENS:CURR:RANG AUTO,(@2)");
             await Task.Delay(500, ct);
-            double IOP11 = double.Parse(PowerSupply0.Query("MEAS:CURR? (@2)")) * 1000;
+            double IOP11 = double.Parse(Inst("PowerSupply0").Query("MEAS:CURR? (@2)")) * 1000;
 
-            PowerSupply0.Write("VOLT 9.0,(@2)");
+            Inst("PowerSupply0").Write("VOLT 9.0,(@2)");
             await Task.Delay(500, ct);
-            double IOP12 = double.Parse(PowerSupply0.Query("MEAS:CURR? (@2)")) * 1000;
+            double IOP12 = double.Parse(Inst("PowerSupply0").Query("MEAS:CURR? (@2)")) * 1000;
 
-            PowerSupply0.Write("VOLT 20.0,(@2)");
+            Inst("PowerSupply0").Write("VOLT 20.0,(@2)");
             await Task.Delay(500, ct);
-            double IOP13 = double.Parse(PowerSupply0.Query("MEAS:CURR? (@2)")) * 1000;
+            double IOP13 = double.Parse(Inst("PowerSupply0").Query("MEAS:CURR? (@2)")) * 1000;
 
             singleSheet.Write(2, y_pos, (y_pos - 7).ToString());
             singleSheet.Write(4, y_pos, IST.ToString("F4"));
@@ -1251,26 +1248,25 @@
             singleSheet.Write(6, y_pos, IOP12.ToString("F4"));
             singleSheet.Write(7, y_pos, IOP13.ToString("F4"));
 
-            PowerSupply0.Write("OUTP OFF,(@2)");
-            PowerSupply2.Write("OUTP OFF,(@3)");
-            PowerSupply0.Write("OUTP OFF,(@3)");
-            PowerSupply1.Write("OUTP OFF,(@2)");
-            PowerSupply1.Write("OUTP OFF,(@3)");
-            PowerSupply2.Write("OUTP OFF,(@1)");
+            Inst("PowerSupply0").Write("OUTP OFF,(@2)");
+            Inst("PowerSupply2").Write("OUTP OFF,(@3)");
+            Inst("PowerSupply0").Write("OUTP OFF,(@3)");
+            Inst("PowerSupply1").Write("OUTP OFF,(@2)");
+            Inst("PowerSupply1").Write("OUTP OFF,(@3)");
+            Inst("PowerSupply2").Write("OUTP OFF,(@1)");
             await Task.Delay(1, ct);
         }
 
         private async Task RunVrefTest(RunTestContext ctx, CancellationToken ct, int? num = null)
         {
-            if (PowerSupply0 == null || PowerSupply1 == null || PowerSupply2 == null || ElectronicLoad == null || DigitalMultimeter0 == null)
-                throw new InvalidOperationException("Check Instrument (PS0-2, DMM0, ELOAD) must be connected.");
-
             if (_regCont?.RegMgr == null)
                 throw new InvalidOperationException("Register Map is not loaded.");
             if (!(_bus is IGpioController gpio))
                 throw new InvalidOperationException("GPIO Control is not supported.");
             if (I2cBus == null)
                 throw new InvalidOperationException("I2cBus is not connected.");
+
+            CheckInstruments("PowerSupply0", "PowerSupply1", "PowerSupply2", "ElectronicLoad0", "DigitalMultimeter0");
 
             IReportSheet singleSheet;
             try
@@ -1292,58 +1288,58 @@
 
             int y_pos = actualNum;
 
-            PowerSupply0.Write("OUTP OFF,(@2)");
-            PowerSupply2.Write("OUTP OFF,(@3)");
-            PowerSupply0.Write("OUTP OFF,(@3)");
-            PowerSupply1.Write("OUTP OFF,(@2)");
-            PowerSupply1.Write("OUTP OFF,(@3)");
-            PowerSupply2.Write("OUTP OFF,(@1)");
-            ElectronicLoad.Write(":OUTP:STAT OFF");
+            Inst("PowerSupply0").Write("OUTP OFF,(@2)");
+            Inst("PowerSupply2").Write("OUTP OFF,(@3)");
+            Inst("PowerSupply0").Write("OUTP OFF,(@3)");
+            Inst("PowerSupply1").Write("OUTP OFF,(@2)");
+            Inst("PowerSupply1").Write("OUTP OFF,(@3)");
+            Inst("PowerSupply2").Write("OUTP OFF,(@1)");
+            Inst("ElectronicLoad0").Write(":OUTP:STAT OFF");
             await Task.Delay(1, ct);
 
-            PowerSupply0.Write("VOLT 0.0,(@2)");
-            PowerSupply2.Write("VOLT 0.0,(@3)");
-            PowerSupply0.Write("VOLT 0.0,(@3)");
-            PowerSupply1.Write("VOLT 0.0,(@2)");
-            PowerSupply1.Write("VOLT 0.0,(@3)");
-            PowerSupply2.Write("VOLT 0.0,(@1)");
+            Inst("PowerSupply0").Write("VOLT 0.0,(@2)");
+            Inst("PowerSupply2").Write("VOLT 0.0,(@3)");
+            Inst("PowerSupply0").Write("VOLT 0.0,(@3)");
+            Inst("PowerSupply1").Write("VOLT 0.0,(@2)");
+            Inst("PowerSupply1").Write("VOLT 0.0,(@3)");
+            Inst("PowerSupply2").Write("VOLT 0.0,(@1)");
             await Task.Delay(10, ct);
 
-            PowerSupply0.Write("VOLT 13.0,(@2)");
-            PowerSupply2.Write("VOLT 1.8,(@3)");
-            PowerSupply0.Write("VOLT 0.2,(@3)");
-            PowerSupply1.Write("VOLT 1.5,(@2)");
-            PowerSupply1.Write("VOLT 3.3,(@3)");
-            PowerSupply2.Write("VOLT 5.0,(@1)");
-            ElectronicLoad.Write("FUNC CC");
-            ElectronicLoad.Write("CURR 0.001");
+            Inst("PowerSupply0").Write("VOLT 13.0,(@2)");
+            Inst("PowerSupply2").Write("VOLT 1.8,(@3)");
+            Inst("PowerSupply0").Write("VOLT 0.2,(@3)");
+            Inst("PowerSupply1").Write("VOLT 1.5,(@2)");
+            Inst("PowerSupply1").Write("VOLT 3.3,(@3)");
+            Inst("PowerSupply2").Write("VOLT 5.0,(@1)");
+            Inst("ElectronicLoad0").Write("FUNC CC");
+            Inst("ElectronicLoad0").Write("CURR 0.001");
             await Task.Delay(10, ct);
 
-            PowerSupply0.Write("OUTP ON,(@2)");
-            PowerSupply2.Write("OUTP ON,(@3)");
-            PowerSupply0.Write("OUTP ON,(@3)");
-            PowerSupply1.Write("OUTP ON,(@2)");
-            PowerSupply1.Write("OUTP ON,(@3)");
-            PowerSupply2.Write("OUTP ON,(@1)");
+            Inst("PowerSupply0").Write("OUTP ON,(@2)");
+            Inst("PowerSupply2").Write("OUTP ON,(@3)");
+            Inst("PowerSupply0").Write("OUTP ON,(@3)");
+            Inst("PowerSupply1").Write("OUTP ON,(@2)");
+            Inst("PowerSupply1").Write("OUTP ON,(@3)");
+            Inst("PowerSupply2").Write("OUTP ON,(@1)");
             await Task.Delay(100, ct);
 
             gpio.SetGpioDirection(8, true);
             gpio.SetGpioDirection(9, false);
 
-            double VREF = double.Parse(DigitalMultimeter0.Query(":MEAS:VOLT:DC?"));
+            double VREF = double.Parse(Inst("DigitalMultimeter0").Query(":MEAS:VOLT:DC?"));
             await Task.Delay(100, ct);
 
-            PowerSupply0.Write("VOLT 20.0,(@2)");
+            Inst("PowerSupply0").Write("VOLT 20.0,(@2)");
             await Task.Delay(10, ct);
-            double VREF_A = double.Parse(DigitalMultimeter0.Query(":MEAS:VOLT:DC?"));
+            double VREF_A = double.Parse(Inst("DigitalMultimeter0").Query(":MEAS:VOLT:DC?"));
             await Task.Delay(100, ct);
 
-            PowerSupply0.Write("VOLT 13.0,(@2)");
+            Inst("PowerSupply0").Write("VOLT 13.0,(@2)");
             await Task.Delay(10, ct);
-            ElectronicLoad.Write(":OUTP:STAT ON");
+            Inst("ElectronicLoad0").Write(":OUTP:STAT ON");
             await Task.Delay(10, ct);
 
-            double VREF_LOAD = double.Parse(DigitalMultimeter0.Query(":MEAS:VOLT:DC?"));
+            double VREF_LOAD = double.Parse(Inst("DigitalMultimeter0").Query(":MEAS:VOLT:DC?"));
             await Task.Delay(100, ct);
 
             double VLOAD = Math.Abs(VREF - VREF_LOAD);
@@ -1354,25 +1350,24 @@
             singleSheet.Write(11, y_pos, VLINE.ToString("F4"));
             singleSheet.Write(12, y_pos, VLOAD.ToString("F4"));
 
-            PowerSupply0.Write("OUTP OFF,(@2)");
-            PowerSupply2.Write("OUTP OFF,(@3)");
-            PowerSupply0.Write("OUTP OFF,(@3)");
-            PowerSupply1.Write("OUTP OFF,(@2)");
-            PowerSupply1.Write("OUTP OFF,(@3)");
-            PowerSupply2.Write("OUTP OFF,(@1)");
-            ElectronicLoad.Write(":OUTP:STAT OFF");
+            Inst("PowerSupply0").Write("OUTP OFF,(@2)");
+            Inst("PowerSupply2").Write("OUTP OFF,(@3)");
+            Inst("PowerSupply0").Write("OUTP OFF,(@3)");
+            Inst("PowerSupply1").Write("OUTP OFF,(@2)");
+            Inst("PowerSupply1").Write("OUTP OFF,(@3)");
+            Inst("PowerSupply2").Write("OUTP OFF,(@1)");
+            Inst("ElectronicLoad0").Write(":OUTP:STAT OFF");
             await Task.Delay(1, ct);
         }
 
         private async Task RunUvloTest(RunTestContext ctx, CancellationToken ct, int? num = null)
         {
-            if (PowerSupply0 == null || PowerSupply1 == null || PowerSupply2 == null || OscilloScope0 == null)
-                throw new InvalidOperationException("All required instruments (PS0-2, OSC0) must be connected.");
-
             if (_regCont?.RegMgr == null)
                 throw new InvalidOperationException("Register Map is not loaded.");
             if (!(_bus is IGpioController gpio))
                 throw new InvalidOperationException("GPIO Control is not supported.");
+
+            CheckInstruments("PowerSupply0", "PowerSupply1", "PowerSupply2", "OscilloScope0");
 
             IReportSheet singleSheet;
             try
@@ -1394,37 +1389,37 @@
 
             int y_pos = actualNum;
 
-            PowerSupply0.Write("OUTP OFF,(@2)");
-            PowerSupply2.Write("OUTP OFF,(@3)");
-            PowerSupply0.Write("OUTP OFF,(@3)");
-            PowerSupply1.Write("OUTP OFF,(@2)");
-            PowerSupply1.Write("OUTP OFF,(@3)");
-            PowerSupply2.Write("OUTP OFF,(@1)");
+            Inst("PowerSupply0").Write("OUTP OFF,(@2)");
+            Inst("PowerSupply2").Write("OUTP OFF,(@3)");
+            Inst("PowerSupply0").Write("OUTP OFF,(@3)");
+            Inst("PowerSupply1").Write("OUTP OFF,(@2)");
+            Inst("PowerSupply1").Write("OUTP OFF,(@3)");
+            Inst("PowerSupply2").Write("OUTP OFF,(@1)");
             await Task.Delay(1, ct);
 
-            PowerSupply0.Write("VOLT 0.0,(@2)");
-            PowerSupply2.Write("VOLT 0.0,(@3)");
-            PowerSupply0.Write("VOLT 0.0,(@3)");
-            PowerSupply1.Write("VOLT 0.0,(@2)");
-            PowerSupply1.Write("VOLT 0.0,(@3)");
-            PowerSupply2.Write("VOLT 0.0,(@1)");
+            Inst("PowerSupply0").Write("VOLT 0.0,(@2)");
+            Inst("PowerSupply2").Write("VOLT 0.0,(@3)");
+            Inst("PowerSupply0").Write("VOLT 0.0,(@3)");
+            Inst("PowerSupply1").Write("VOLT 0.0,(@2)");
+            Inst("PowerSupply1").Write("VOLT 0.0,(@3)");
+            Inst("PowerSupply2").Write("VOLT 0.0,(@1)");
             await Task.Delay(10, ct);
 
-            PowerSupply0.Write("VOLT 7.3,(@2)");
-            PowerSupply2.Write("VOLT 1.8,(@3)");
-            PowerSupply0.Write("VOLT 0.2,(@3)");
-            PowerSupply1.Write("VOLT 1.5,(@2)");
-            PowerSupply1.Write("VOLT 5.0,(@3)");
-            PowerSupply2.Write("VOLT 5.0,(@1)");
+            Inst("PowerSupply0").Write("VOLT 7.3,(@2)");
+            Inst("PowerSupply2").Write("VOLT 1.8,(@3)");
+            Inst("PowerSupply0").Write("VOLT 0.2,(@3)");
+            Inst("PowerSupply1").Write("VOLT 1.5,(@2)");
+            Inst("PowerSupply1").Write("VOLT 5.0,(@3)");
+            Inst("PowerSupply2").Write("VOLT 5.0,(@1)");
             await Task.Delay(10, ct);
 
-            OscilloScope0.Write(":TIM:SCAL 1E-3");
-            PowerSupply0.Write("OUTP ON,(@2)");
-            PowerSupply2.Write("OUTP ON,(@3)");
-            PowerSupply0.Write("OUTP ON,(@3)");
-            PowerSupply1.Write("OUTP ON,(@2)");
-            PowerSupply1.Write("OUTP ON,(@3)");
-            PowerSupply2.Write("OUTP ON,(@1)");
+            Inst("OscilloScope0").Write(":TIM:SCAL 1E-3");
+            Inst("PowerSupply0").Write("OUTP ON,(@2)");
+            Inst("PowerSupply2").Write("OUTP ON,(@3)");
+            Inst("PowerSupply0").Write("OUTP ON,(@3)");
+            Inst("PowerSupply1").Write("OUTP ON,(@2)");
+            Inst("PowerSupply1").Write("OUTP ON,(@3)");
+            Inst("PowerSupply2").Write("OUTP ON,(@1)");
             await Task.Delay(1000, ct);
 
             gpio.SetGpioDirection(8, true);
@@ -1434,9 +1429,9 @@
             for (VCC_Voltage = 7.3; VCC_Voltage < 9.3; VCC_Voltage += 0.02)
             {
                 ct.ThrowIfCancellationRequested();
-                PowerSupply0.Write($"VOLT {VCC_Voltage},(@2)");
+                Inst("PowerSupply0").Write($"VOLT {VCC_Voltage},(@2)");
                 await Task.Delay(10, ct);
-                double GATE_High = double.Parse(OscilloScope0.Query(":MEAS:VAV? CHAN1"));
+                double GATE_High = double.Parse(Inst("OscilloScope0").Query(":MEAS:VAV? CHAN1"));
                 if (GATE_High > 0.4)
                     break;
             }
@@ -1445,9 +1440,9 @@
             for (VCC_Voltage = VSTH; VCC_Voltage >= 6.5; VCC_Voltage -= 0.02)
             {
                 ct.ThrowIfCancellationRequested();
-                PowerSupply0.Write($"VOLT {VCC_Voltage},(@2)");
+                Inst("PowerSupply0").Write($"VOLT {VCC_Voltage},(@2)");
                 await Task.Delay(10, ct);
-                double GATE_Low = double.Parse(OscilloScope0.Query(":MEAS:VAV? CHAN1"));
+                double GATE_Low = double.Parse(Inst("OscilloScope0").Query(":MEAS:VAV? CHAN1"));
                 if (GATE_Low < 0.1)
                     break;
             }
@@ -1456,23 +1451,21 @@
             singleSheet.Write(13, y_pos, VSTH.ToString("F4"));
             singleSheet.Write(14, y_pos, VSTL.ToString("F4"));
 
-            PowerSupply0.Write("OUTP OFF,(@2)");
-            PowerSupply2.Write("OUTP OFF,(@3)");
-            PowerSupply0.Write("OUTP OFF,(@3)");
-            PowerSupply1.Write("OUTP OFF,(@2)");
-            PowerSupply1.Write("OUTP OFF,(@3)");
-            PowerSupply2.Write("OUTP OFF,(@1)");
+            Inst("PowerSupply0").Write("OUTP OFF,(@2)");
+            Inst("PowerSupply2").Write("OUTP OFF,(@3)");
+            Inst("PowerSupply0").Write("OUTP OFF,(@3)");
+            Inst("PowerSupply1").Write("OUTP OFF,(@2)");
+            Inst("PowerSupply1").Write("OUTP OFF,(@3)");
+            Inst("PowerSupply2").Write("OUTP OFF,(@1)");
             await Task.Delay(1, ct);
         }
 
         private async Task RunVpwmTest(RunTestContext ctx, CancellationToken ct, int? num = null)
         {
-            if (PowerSupply0 == null || PowerSupply1 == null || PowerSupply2 == null)
-                throw new InvalidOperationException("All required power supplies (PS0-2) must be connected.");
-            if (OscilloScope0 == null)
-                throw new InvalidOperationException("Oscilloscope must be connected.");
             if (!(_bus is IGpioController gpio))
                 throw new InvalidOperationException("GPIO Control is not supported.");
+
+            CheckInstruments("PowerSupply0", "PowerSupply1", "PowerSupply2", "OscilloScope0");
 
             IReportSheet singleSheet;
             try
@@ -1494,37 +1487,37 @@
 
             int y_pos = actualNum;
 
-            PowerSupply0.Write("OUTP OFF,(@2)");
-            PowerSupply2.Write("OUTP OFF,(@3)");
-            PowerSupply0.Write("OUTP OFF,(@3)");
-            PowerSupply1.Write("OUTP OFF,(@2)");
-            PowerSupply1.Write("OUTP OFF,(@3)");
-            PowerSupply2.Write("OUTP OFF,(@1)");
+            Inst("PowerSupply0").Write("OUTP OFF,(@2)");
+            Inst("PowerSupply2").Write("OUTP OFF,(@3)");
+            Inst("PowerSupply0").Write("OUTP OFF,(@3)");
+            Inst("PowerSupply1").Write("OUTP OFF,(@2)");
+            Inst("PowerSupply1").Write("OUTP OFF,(@3)");
+            Inst("PowerSupply2").Write("OUTP OFF,(@1)");
             await Task.Delay(1, ct);
 
-            PowerSupply0.Write("VOLT 0.0,(@2)");
-            PowerSupply2.Write("VOLT 0.0,(@3)");
-            PowerSupply0.Write("VOLT 0.0,(@3)");
-            PowerSupply1.Write("VOLT 0.0,(@2)");
-            PowerSupply1.Write("VOLT 0.0,(@3)");
-            PowerSupply2.Write("VOLT 0.0,(@1)");
+            Inst("PowerSupply0").Write("VOLT 0.0,(@2)");
+            Inst("PowerSupply2").Write("VOLT 0.0,(@3)");
+            Inst("PowerSupply0").Write("VOLT 0.0,(@3)");
+            Inst("PowerSupply1").Write("VOLT 0.0,(@2)");
+            Inst("PowerSupply1").Write("VOLT 0.0,(@3)");
+            Inst("PowerSupply2").Write("VOLT 0.0,(@1)");
             await Task.Delay(10, ct);
 
-            PowerSupply0.Write("VOLT 13.0,(@2)");
-            PowerSupply2.Write("VOLT 1.8,(@3)");
-            PowerSupply0.Write("VOLT 0.2,(@3)");
-            PowerSupply1.Write("VOLT 1.5,(@2)");
-            PowerSupply1.Write("VOLT 5.0,(@3)");
-            PowerSupply2.Write("VOLT 0.0,(@1)");
+            Inst("PowerSupply0").Write("VOLT 13.0,(@2)");
+            Inst("PowerSupply2").Write("VOLT 1.8,(@3)");
+            Inst("PowerSupply0").Write("VOLT 0.2,(@3)");
+            Inst("PowerSupply1").Write("VOLT 1.5,(@2)");
+            Inst("PowerSupply1").Write("VOLT 5.0,(@3)");
+            Inst("PowerSupply2").Write("VOLT 0.0,(@1)");
             await Task.Delay(10, ct);
 
-            OscilloScope0.Write(":TIM:SCAL 1E-3");
-            PowerSupply0.Write("OUTP ON,(@2)");
-            PowerSupply2.Write("OUTP ON,(@3)");
-            PowerSupply0.Write("OUTP ON,(@3)");
-            PowerSupply1.Write("OUTP ON,(@2)");
-            PowerSupply1.Write("OUTP ON,(@3)");
-            PowerSupply2.Write("OUTP ON,(@1)");
+            Inst("OscilloScope0").Write(":TIM:SCAL 1E-3");
+            Inst("PowerSupply0").Write("OUTP ON,(@2)");
+            Inst("PowerSupply2").Write("OUTP ON,(@3)");
+            Inst("PowerSupply0").Write("OUTP ON,(@3)");
+            Inst("PowerSupply1").Write("OUTP ON,(@2)");
+            Inst("PowerSupply1").Write("OUTP ON,(@3)");
+            Inst("PowerSupply2").Write("OUTP ON,(@1)");
             await Task.Delay(1000, ct);
 
             gpio.SetGpioDirection(8, true);
@@ -1534,30 +1527,30 @@
             for (pwmVoltage = 1.16; pwmVoltage < 1.84; pwmVoltage += 0.02)
             {
                 ct.ThrowIfCancellationRequested();
-                PowerSupply2.Write($"VOLT {pwmVoltage:F3},(@1)");
+                Inst("PowerSupply2").Write($"VOLT {pwmVoltage:F3},(@1)");
                 await Task.Delay(10, ct);
 
-                gateHigh = double.Parse(OscilloScope0.Query(":MEAS:VAV? CHAN1"));
+                gateHigh = double.Parse(Inst("OscilloScope0").Query(":MEAS:VAV? CHAN1"));
                 if (gateHigh > 1)
                     break;
             }
 
-            double vGh = double.Parse(OscilloScope0.Query(":MEAS:VTOP? CHAN1"));
+            double vGh = double.Parse(Inst("OscilloScope0").Query(":MEAS:VTOP? CHAN1"));
             double vPwm = pwmVoltage;
 
             double gateLow = 0;
             for (pwmVoltage = vPwm; pwmVoltage >= 0.6; pwmVoltage -= 0.02)
             {
                 ct.ThrowIfCancellationRequested();
-                PowerSupply2.Write($"VOLT {pwmVoltage:F3},(@1)");
+                Inst("PowerSupply2").Write($"VOLT {pwmVoltage:F3},(@1)");
                 await Task.Delay(10, ct);
 
-                gateLow = double.Parse(OscilloScope0.Query(":MEAS:VAV? CHAN1"));
+                gateLow = double.Parse(Inst("OscilloScope0").Query(":MEAS:VAV? CHAN1"));
                 if (gateLow < 1)
                     break;
             }
 
-            double vGl = double.Parse(OscilloScope0.Query(":MEAS:VAV? CHAN1"));
+            double vGl = double.Parse(Inst("OscilloScope0").Query(":MEAS:VAV? CHAN1"));
             if (vGl < 1)
                 vGl = 0;
 
@@ -1568,22 +1561,21 @@
             singleSheet.Write(18, y_pos, vGh.ToString("F4"));
             singleSheet.Write(19, y_pos, vGl.ToString("F4"));
 
-            PowerSupply0.Write("OUTP OFF,(@2)");
-            PowerSupply2.Write("OUTP OFF,(@3)");
-            PowerSupply0.Write("OUTP OFF,(@3)");
-            PowerSupply1.Write("OUTP OFF,(@2)");
-            PowerSupply1.Write("OUTP OFF,(@3)");
-            PowerSupply2.Write("OUTP OFF,(@1)");
+            Inst("PowerSupply0").Write("OUTP OFF,(@2)");
+            Inst("PowerSupply2").Write("OUTP OFF,(@3)");
+            Inst("PowerSupply0").Write("OUTP OFF,(@3)");
+            Inst("PowerSupply1").Write("OUTP OFF,(@2)");
+            Inst("PowerSupply1").Write("OUTP OFF,(@3)");
+            Inst("PowerSupply2").Write("OUTP OFF,(@1)");
             await Task.Delay(1, ct);
         }
 
         private async Task RunScpThresholdTest(RunTestContext ctx, CancellationToken ct, int? num = null)
         {
-            if (PowerSupply0 == null || PowerSupply1 == null || PowerSupply2 == null || OscilloScope0 == null || SignalGenerator0 == null)
-                throw new InvalidOperationException("All required instruments must be connected.");
-
             if (!(_bus is IGpioController gpio))
                 throw new InvalidOperationException("GPIO Control is not supported.");
+
+            CheckInstruments("PowerSupply0", "PowerSupply1", "PowerSupply2", "OscilloScope0", "SignalGenerator0");
 
             IReportSheet singleSheet;
             try
@@ -1594,43 +1586,43 @@
 
             int y_pos = num ?? 1;
 
-            PowerSupply0.Write("OUTP OFF,(@2)");
-            PowerSupply2.Write("OUTP OFF,(@3)");
-            PowerSupply0.Write("OUTP OFF,(@3)");
-            PowerSupply1.Write("OUTP OFF,(@2)");
-            PowerSupply1.Write("OUTP OFF,(@3)");
-            PowerSupply2.Write("OUTP OFF,(@1)");
-            SignalGenerator0.Write("OUTP:STAT OFF ");
+            Inst("PowerSupply0").Write("OUTP OFF,(@2)");
+            Inst("PowerSupply2").Write("OUTP OFF,(@3)");
+            Inst("PowerSupply0").Write("OUTP OFF,(@3)");
+            Inst("PowerSupply1").Write("OUTP OFF,(@2)");
+            Inst("PowerSupply1").Write("OUTP OFF,(@3)");
+            Inst("PowerSupply2").Write("OUTP OFF,(@1)");
+            Inst("SignalGenerator0").Write("OUTP:STAT OFF ");
             await Task.Delay(1, ct);
 
-            PowerSupply0.Write("VOLT 0.0,(@2)");
-            PowerSupply2.Write("VOLT 0.0,(@3)");
-            PowerSupply0.Write("VOLT 0.0,(@3)");
-            PowerSupply1.Write("VOLT 0.0,(@2)");
-            PowerSupply1.Write("VOLT 0.0,(@3)");
-            PowerSupply2.Write("VOLT 0.0,(@1)");
+            Inst("PowerSupply0").Write("VOLT 0.0,(@2)");
+            Inst("PowerSupply2").Write("VOLT 0.0,(@3)");
+            Inst("PowerSupply0").Write("VOLT 0.0,(@3)");
+            Inst("PowerSupply1").Write("VOLT 0.0,(@2)");
+            Inst("PowerSupply1").Write("VOLT 0.0,(@3)");
+            Inst("PowerSupply2").Write("VOLT 0.0,(@1)");
             await Task.Delay(10, ct);
 
-            PowerSupply0.Write("VOLT 13.0,(@2)");
-            PowerSupply2.Write("VOLT 1.8,(@3)");
-            PowerSupply0.Write("VOLT 0.2,(@3)");
-            PowerSupply1.Write("VOLT 1.5,(@2)");
-            PowerSupply1.Write("VOLT 3.3,(@3)");
-            PowerSupply2.Write("VOLT 5.0,(@1)");
-            SignalGenerator0.Write("SOURce1:FUNC SQU");
-            SignalGenerator0.Write("SOURce1:FREQ 10000");
-            SignalGenerator0.Write("SOURce1:VOLTage 1.5");
-            SignalGenerator0.Write("SOURce1:VOLTage:OFFSet 0.75");
+            Inst("PowerSupply0").Write("VOLT 13.0,(@2)");
+            Inst("PowerSupply2").Write("VOLT 1.8,(@3)");
+            Inst("PowerSupply0").Write("VOLT 0.2,(@3)");
+            Inst("PowerSupply1").Write("VOLT 1.5,(@2)");
+            Inst("PowerSupply1").Write("VOLT 3.3,(@3)");
+            Inst("PowerSupply2").Write("VOLT 5.0,(@1)");
+            Inst("SignalGenerator0").Write("SOURce1:FUNC SQU");
+            Inst("SignalGenerator0").Write("SOURce1:FREQ 10000");
+            Inst("SignalGenerator0").Write("SOURce1:VOLTage 1.5");
+            Inst("SignalGenerator0").Write("SOURce1:VOLTage:OFFSet 0.75");
             await Task.Delay(10, ct);
 
-            OscilloScope0.Write(":TIM:SCAL 1E-3");
-            PowerSupply0.Write("OUTP ON,(@2)");
-            PowerSupply2.Write("OUTP ON,(@3)");
-            PowerSupply0.Write("OUTP ON,(@3)");
-            PowerSupply1.Write("OUTP ON,(@2)");
-            PowerSupply1.Write("OUTP ON,(@3)");
-            PowerSupply2.Write("OUTP ON,(@1)");
-            SignalGenerator0.Write("OUTP:STAT ON");
+            Inst("OscilloScope0").Write(":TIM:SCAL 1E-3");
+            Inst("PowerSupply0").Write("OUTP ON,(@2)");
+            Inst("PowerSupply2").Write("OUTP ON,(@3)");
+            Inst("PowerSupply0").Write("OUTP ON,(@3)");
+            Inst("PowerSupply1").Write("OUTP ON,(@2)");
+            Inst("PowerSupply1").Write("OUTP ON,(@3)");
+            Inst("PowerSupply2").Write("OUTP ON,(@1)");
+            Inst("SignalGenerator0").Write("OUTP:STAT ON");
             await Task.Delay(1000, ct);
             gpio.SetGpioDirection(8, true);
             gpio.SetGpioDirection(9, false);
@@ -1639,31 +1631,31 @@
             for (CS_Voltage = 1.5; CS_Voltage < 2.16; CS_Voltage += 0.01)
             {
                 ct.ThrowIfCancellationRequested();
-                PowerSupply0.Write($"VOLT {CS_Voltage},(@3)");
+                Inst("PowerSupply0").Write($"VOLT {CS_Voltage},(@3)");
                 await Task.Delay(10, ct);
-                OFF_TIME = double.Parse(OscilloScope0.Query(":MEAS:NWIDth? CHAN1"));
+                OFF_TIME = double.Parse(Inst("OscilloScope0").Query(":MEAS:NWIDth? CHAN1"));
                 if (OFF_TIME > 2)
                     break;
             }
 
             singleSheet.Write(20, y_pos, CS_Voltage.ToString("F4"));
 
-            PowerSupply0.Write("OUTP OFF,(@2)");
-            PowerSupply2.Write("OUTP OFF,(@3)");
-            PowerSupply0.Write("OUTP OFF,(@3)");
-            PowerSupply1.Write("OUTP OFF,(@2)");
-            PowerSupply1.Write("OUTP OFF,(@3)");
-            PowerSupply2.Write("OUTP OFF,(@1)");
-            SignalGenerator0.Write("OUTP:STAT OFF ");
+            Inst("PowerSupply0").Write("OUTP OFF,(@2)");
+            Inst("PowerSupply2").Write("OUTP OFF,(@3)");
+            Inst("PowerSupply0").Write("OUTP OFF,(@3)");
+            Inst("PowerSupply1").Write("OUTP OFF,(@2)");
+            Inst("PowerSupply1").Write("OUTP OFF,(@3)");
+            Inst("PowerSupply2").Write("OUTP OFF,(@1)");
+            Inst("SignalGenerator0").Write("OUTP:STAT OFF ");
             await Task.Delay(1, ct);
         }
 
         private async Task RunCsShortProtTest(RunTestContext ctx, CancellationToken ct, int? num = null)
         {
-            if (PowerSupply0 == null || PowerSupply1 == null || PowerSupply2 == null || OscilloScope0 == null || SignalGenerator0 == null)
-                throw new InvalidOperationException("All required instruments must be connected.");
             if (!(_bus is IGpioController gpio))
                 throw new InvalidOperationException("GPIO Control is not supported.");
+
+            CheckInstruments("PowerSupply0", "PowerSupply1", "PowerSupply2", "OscilloScope0", "SignalGenerator0");
 
             IReportSheet singleSheet;
             try
@@ -1674,38 +1666,38 @@
 
             int y_pos = num ?? 1;
 
-            PowerSupply0.Write("OUTP OFF,(@2)");
-            PowerSupply2.Write("OUTP OFF,(@3)");
-            PowerSupply0.Write("OUTP OFF,(@3)");
-            PowerSupply1.Write("OUTP OFF,(@2)");
-            PowerSupply1.Write("OUTP OFF,(@3)");
-            PowerSupply2.Write("OUTP OFF,(@1)");
-            SignalGenerator0.Write("OUTP:STAT OFF ");
+            Inst("PowerSupply0").Write("OUTP OFF,(@2)");
+            Inst("PowerSupply2").Write("OUTP OFF,(@3)");
+            Inst("PowerSupply0").Write("OUTP OFF,(@3)");
+            Inst("PowerSupply1").Write("OUTP OFF,(@2)");
+            Inst("PowerSupply1").Write("OUTP OFF,(@3)");
+            Inst("PowerSupply2").Write("OUTP OFF,(@1)");
+            Inst("SignalGenerator0").Write("OUTP:STAT OFF ");
             await Task.Delay(1, ct);
 
-            PowerSupply0.Write("VOLT 0.0,(@2)");
-            PowerSupply2.Write("VOLT 0.0,(@3)");
-            PowerSupply0.Write("VOLT 0.0,(@3)");
-            PowerSupply1.Write("VOLT 0.0,(@2)");
-            PowerSupply1.Write("VOLT 0.0,(@3)");
-            PowerSupply2.Write("VOLT 0.0,(@1)");
+            Inst("PowerSupply0").Write("VOLT 0.0,(@2)");
+            Inst("PowerSupply2").Write("VOLT 0.0,(@3)");
+            Inst("PowerSupply0").Write("VOLT 0.0,(@3)");
+            Inst("PowerSupply1").Write("VOLT 0.0,(@2)");
+            Inst("PowerSupply1").Write("VOLT 0.0,(@3)");
+            Inst("PowerSupply2").Write("VOLT 0.0,(@1)");
             await Task.Delay(10, ct);
 
-            PowerSupply0.Write("VOLT 13.0,(@2)");
-            PowerSupply2.Write("VOLT 1.8,(@3)");
-            PowerSupply0.Write("VOLT 0.2,(@3)");
-            PowerSupply1.Write("VOLT 1.5,(@2)");
-            PowerSupply1.Write("VOLT 3.3,(@3)");
-            PowerSupply2.Write("VOLT 5.0,(@1)");
+            Inst("PowerSupply0").Write("VOLT 13.0,(@2)");
+            Inst("PowerSupply2").Write("VOLT 1.8,(@3)");
+            Inst("PowerSupply0").Write("VOLT 0.2,(@3)");
+            Inst("PowerSupply1").Write("VOLT 1.5,(@2)");
+            Inst("PowerSupply1").Write("VOLT 3.3,(@3)");
+            Inst("PowerSupply2").Write("VOLT 5.0,(@1)");
             await Task.Delay(10, ct);
 
-            OscilloScope0.Write(":TIM:SCAL 1E-3");
-            PowerSupply0.Write("OUTP ON,(@2)");
-            PowerSupply2.Write("OUTP ON,(@3)");
-            PowerSupply0.Write("OUTP ON,(@3)");
-            PowerSupply1.Write("OUTP ON,(@2)");
-            PowerSupply1.Write("OUTP ON,(@3)");
-            PowerSupply2.Write("OUTP ON,(@1)");
+            Inst("OscilloScope0").Write(":TIM:SCAL 1E-3");
+            Inst("PowerSupply0").Write("OUTP ON,(@2)");
+            Inst("PowerSupply2").Write("OUTP ON,(@3)");
+            Inst("PowerSupply0").Write("OUTP ON,(@3)");
+            Inst("PowerSupply1").Write("OUTP ON,(@2)");
+            Inst("PowerSupply1").Write("OUTP ON,(@3)");
+            Inst("PowerSupply2").Write("OUTP ON,(@1)");
             await Task.Delay(1000, ct);
             gpio.SetGpioDirection(8, true);
             gpio.SetGpioDirection(9, false);
@@ -1714,51 +1706,51 @@
             for (CS_Voltage = 0.2; CS_Voltage >= 0; CS_Voltage -= 0.005)
             {
                 ct.ThrowIfCancellationRequested();
-                PowerSupply0.Write($"VOLT {CS_Voltage},(@3)");
+                Inst("PowerSupply0").Write($"VOLT {CS_Voltage},(@3)");
                 await Task.Delay(10, ct);
-                ON_TIME = double.Parse(OscilloScope0.Query(":MEAS:PWIDth? CHAN1")) * 1E+6;
+                ON_TIME = double.Parse(Inst("OscilloScope0").Query(":MEAS:PWIDth? CHAN1")) * 1E+6;
                 if (ON_TIME < 15)
                     break;
             }
 
             double VCSRST = CS_Voltage;
 
-            PowerSupply0.Write("VOLT 0,(@3)");
+            Inst("PowerSupply0").Write("VOLT 0,(@3)");
             await Task.Delay(10, ct);
 
-            ON_TIME = double.Parse(OscilloScope0.Query(":MEAS:PWIDth? CHAN1")) * 1E+6;
+            ON_TIME = double.Parse(Inst("OscilloScope0").Query(":MEAS:PWIDth? CHAN1")) * 1E+6;
             double TCSMNT = ON_TIME;
 
             gpio.SetGpioDirection(8, true);
             gpio.SetGpioValue(8, false);
             gpio.SetGpioDirection(9, false);
 
-            OscilloScope0.Write(":TIM:SCAL 5E-3");
+            Inst("OscilloScope0").Write(":TIM:SCAL 5E-3");
             await Task.Delay(100, ct);
 
-            double OFF_TIME = double.Parse(OscilloScope0.Query(":MEAS:NWIDth? CHAN1")) * 1E+3;
+            double OFF_TIME = double.Parse(Inst("OscilloScope0").Query(":MEAS:NWIDth? CHAN1")) * 1E+3;
             double TCSRST = OFF_TIME;
 
             singleSheet.Write(21, y_pos, VCSRST.ToString("F4"));
             singleSheet.Write(22, y_pos, TCSMNT.ToString("F4"));
             singleSheet.Write(23, y_pos, TCSRST.ToString("F4"));
 
-            PowerSupply0.Write("OUTP OFF,(@2)");
-            PowerSupply2.Write("OUTP OFF,(@3)");
-            PowerSupply0.Write("OUTP OFF,(@3)");
-            PowerSupply1.Write("OUTP OFF,(@2)");
-            PowerSupply1.Write("OUTP OFF,(@3)");
-            PowerSupply2.Write("OUTP OFF,(@1)");
-            SignalGenerator0.Write("OUTP:STAT OFF ");
+            Inst("PowerSupply0").Write("OUTP OFF,(@2)");
+            Inst("PowerSupply2").Write("OUTP OFF,(@3)");
+            Inst("PowerSupply0").Write("OUTP OFF,(@3)");
+            Inst("PowerSupply1").Write("OUTP OFF,(@2)");
+            Inst("PowerSupply1").Write("OUTP OFF,(@3)");
+            Inst("PowerSupply2").Write("OUTP OFF,(@1)");
+            Inst("SignalGenerator0").Write("OUTP:STAT OFF ");
             await Task.Delay(1, ct);
         }
 
         private async Task RunMaxOnOffTimeTest(RunTestContext ctx, CancellationToken ct, int? num = null)
         {
-            if (PowerSupply0 == null || PowerSupply1 == null || PowerSupply2 == null || OscilloScope0 == null || SignalGenerator0 == null)
-                throw new InvalidOperationException("All required instruments must be connected.");
             if (!(_bus is IGpioController gpio))
                 throw new InvalidOperationException("GPIO Control is not supported.");
+
+            CheckInstruments("PowerSupply0", "PowerSupply1", "PowerSupply2", "OscilloScope0", "SignalGenerator0");
 
             IReportSheet singleSheet;
             try
@@ -1769,68 +1761,68 @@
 
             int y_pos = num ?? 1;
 
-            PowerSupply0.Write("OUTP OFF,(@2)");
-            PowerSupply2.Write("OUTP OFF,(@3)");
-            PowerSupply0.Write("OUTP OFF,(@3)");
-            PowerSupply1.Write("OUTP OFF,(@2)");
-            PowerSupply1.Write("OUTP OFF,(@3)");
-            PowerSupply2.Write("OUTP OFF,(@1)");
-            SignalGenerator0.Write("OUTP:STAT OFF");
+            Inst("PowerSupply0").Write("OUTP OFF,(@2)");
+            Inst("PowerSupply2").Write("OUTP OFF,(@3)");
+            Inst("PowerSupply0").Write("OUTP OFF,(@3)");
+            Inst("PowerSupply1").Write("OUTP OFF,(@2)");
+            Inst("PowerSupply1").Write("OUTP OFF,(@3)");
+            Inst("PowerSupply2").Write("OUTP OFF,(@1)");
+            Inst("SignalGenerator0").Write("OUTP:STAT OFF");
             await Task.Delay(1, ct);
 
-            PowerSupply0.Write("VOLT 0.0,(@2)");
-            PowerSupply2.Write("VOLT 0.0,(@3)");
-            PowerSupply0.Write("VOLT 0.0,(@3)");
-            PowerSupply1.Write("VOLT 0.0,(@2)");
-            PowerSupply1.Write("VOLT 0.0,(@3)");
-            PowerSupply2.Write("VOLT 0.0,(@1)");
+            Inst("PowerSupply0").Write("VOLT 0.0,(@2)");
+            Inst("PowerSupply2").Write("VOLT 0.0,(@3)");
+            Inst("PowerSupply0").Write("VOLT 0.0,(@3)");
+            Inst("PowerSupply1").Write("VOLT 0.0,(@2)");
+            Inst("PowerSupply1").Write("VOLT 0.0,(@3)");
+            Inst("PowerSupply2").Write("VOLT 0.0,(@1)");
             await Task.Delay(10, ct);
 
-            PowerSupply0.Write("VOLT 13.0,(@2)");
-            PowerSupply2.Write("VOLT 1.8,(@3)");
-            PowerSupply0.Write("VOLT 0.2,(@3)");
-            PowerSupply1.Write("VOLT 1.5,(@2)");
-            PowerSupply1.Write("VOLT 3.3,(@3)");
-            PowerSupply2.Write("VOLT 5.0,(@1)");
-            SignalGenerator0.Write("SOURce1:FUNC DC");
-            SignalGenerator0.Write("SOURce1:VOLTage 0");
-            SignalGenerator0.Write("SOURce1:VOLTage:OFFSet 0");
+            Inst("PowerSupply0").Write("VOLT 13.0,(@2)");
+            Inst("PowerSupply2").Write("VOLT 1.8,(@3)");
+            Inst("PowerSupply0").Write("VOLT 0.2,(@3)");
+            Inst("PowerSupply1").Write("VOLT 1.5,(@2)");
+            Inst("PowerSupply1").Write("VOLT 3.3,(@3)");
+            Inst("PowerSupply2").Write("VOLT 5.0,(@1)");
+            Inst("SignalGenerator0").Write("SOURce1:FUNC DC");
+            Inst("SignalGenerator0").Write("SOURce1:VOLTage 0");
+            Inst("SignalGenerator0").Write("SOURce1:VOLTage:OFFSet 0");
             await Task.Delay(10, ct);
 
-            PowerSupply0.Write("OUTP ON,(@2)");
-            PowerSupply2.Write("OUTP ON,(@3)");
-            PowerSupply0.Write("OUTP ON,(@3)");
-            PowerSupply1.Write("OUTP ON,(@2)");
-            PowerSupply1.Write("OUTP ON,(@3)");
-            PowerSupply2.Write("OUTP ON,(@1)");
-            SignalGenerator0.Write("OUTP:STAT ON");
-            OscilloScope0.Write(":TIM:SCAL 2E-5");
+            Inst("PowerSupply0").Write("OUTP ON,(@2)");
+            Inst("PowerSupply2").Write("OUTP ON,(@3)");
+            Inst("PowerSupply0").Write("OUTP ON,(@3)");
+            Inst("PowerSupply1").Write("OUTP ON,(@2)");
+            Inst("PowerSupply1").Write("OUTP ON,(@3)");
+            Inst("PowerSupply2").Write("OUTP ON,(@1)");
+            Inst("SignalGenerator0").Write("OUTP:STAT ON");
+            Inst("OscilloScope0").Write(":TIM:SCAL 2E-5");
             await Task.Delay(1000, ct);
             gpio.SetGpioDirection(8, true);
             gpio.SetGpioDirection(9, false);
 
-            double OFF_TIME = double.Parse(OscilloScope0.Query(":MEAS:NWIDth? CHAN1")) * 1E+6;
-            double ON_TIME = double.Parse(OscilloScope0.Query(":MEAS:PWIDth? CHAN1")) * 1E+6;
+            double OFF_TIME = double.Parse(Inst("OscilloScope0").Query(":MEAS:NWIDth? CHAN1")) * 1E+6;
+            double ON_TIME = double.Parse(Inst("OscilloScope0").Query(":MEAS:PWIDth? CHAN1")) * 1E+6;
 
             singleSheet.Write(24, y_pos, ON_TIME.ToString("F4"));
             singleSheet.Write(25, y_pos, OFF_TIME.ToString("F4"));
 
-            PowerSupply0.Write("OUTP OFF,(@2)");
-            PowerSupply2.Write("OUTP OFF,(@3)");
-            PowerSupply0.Write("OUTP OFF,(@3)");
-            PowerSupply1.Write("OUTP OFF,(@2)");
-            PowerSupply1.Write("OUTP OFF,(@3)");
-            PowerSupply2.Write("OUTP OFF,(@1)");
-            SignalGenerator0.Write("OUTP:STAT OFF");
+            Inst("PowerSupply0").Write("OUTP OFF,(@2)");
+            Inst("PowerSupply2").Write("OUTP OFF,(@3)");
+            Inst("PowerSupply0").Write("OUTP OFF,(@3)");
+            Inst("PowerSupply1").Write("OUTP OFF,(@2)");
+            Inst("PowerSupply1").Write("OUTP OFF,(@3)");
+            Inst("PowerSupply2").Write("OUTP OFF,(@1)");
+            Inst("SignalGenerator0").Write("OUTP:STAT OFF");
             await Task.Delay(1, ct);
         }
 
         private async Task RunFetDsShortProtTest(RunTestContext ctx, CancellationToken ct, int? num = null)
         {
-            if (PowerSupply0 == null || PowerSupply1 == null || PowerSupply2 == null || OscilloScope0 == null || SignalGenerator0 == null)
-                throw new InvalidOperationException("All required instruments must be connected.");
             if (!(_bus is IGpioController gpio))
                 throw new InvalidOperationException("GPIO Control is not supported.");
+
+            CheckInstruments("PowerSupply0", "PowerSupply1", "PowerSupply2", "OscilloScope0", "SignalGenerator0");
 
             IReportSheet singleSheet;
             try
@@ -1841,85 +1833,85 @@
 
             int y_pos = num ?? 1;
 
-            PowerSupply0.Write("OUTP OFF,(@2)");
-            PowerSupply2.Write("OUTP OFF,(@3)");
-            PowerSupply0.Write("OUTP OFF,(@3)");
-            PowerSupply1.Write("OUTP OFF,(@2)");
-            PowerSupply1.Write("OUTP OFF,(@3)");
-            PowerSupply2.Write("OUTP OFF,(@1)");
-            SignalGenerator0.Write("OUTP:STAT OFF");
+            Inst("PowerSupply0").Write("OUTP OFF,(@2)");
+            Inst("PowerSupply2").Write("OUTP OFF,(@3)");
+            Inst("PowerSupply0").Write("OUTP OFF,(@3)");
+            Inst("PowerSupply1").Write("OUTP OFF,(@2)");
+            Inst("PowerSupply1").Write("OUTP OFF,(@3)");
+            Inst("PowerSupply2").Write("OUTP OFF,(@1)");
+            Inst("SignalGenerator0").Write("OUTP:STAT OFF");
             await Task.Delay(1, ct);
 
-            PowerSupply0.Write("VOLT 0.0,(@2)");
-            PowerSupply2.Write("VOLT 0.0,(@3)");
-            PowerSupply0.Write("VOLT 0.0,(@3)");
-            PowerSupply1.Write("VOLT 0.0,(@2)");
-            PowerSupply1.Write("VOLT 0.0,(@3)");
-            PowerSupply2.Write("VOLT 0.0,(@1)");
+            Inst("PowerSupply0").Write("VOLT 0.0,(@2)");
+            Inst("PowerSupply2").Write("VOLT 0.0,(@3)");
+            Inst("PowerSupply0").Write("VOLT 0.0,(@3)");
+            Inst("PowerSupply1").Write("VOLT 0.0,(@2)");
+            Inst("PowerSupply1").Write("VOLT 0.0,(@3)");
+            Inst("PowerSupply2").Write("VOLT 0.0,(@1)");
             await Task.Delay(10, ct);
 
-            PowerSupply0.Write("VOLT 13.0,(@2)");
-            PowerSupply2.Write("VOLT 1.8,(@3)");
-            PowerSupply1.Write("VOLT 0,(@2)");
-            PowerSupply1.Write("VOLT 0.0,(@3)");
-            PowerSupply2.Write("VOLT 5.0,(@1)");
-            PowerSupply0.Write("VOLT 0.2,(@3)");
+            Inst("PowerSupply0").Write("VOLT 13.0,(@2)");
+            Inst("PowerSupply2").Write("VOLT 1.8,(@3)");
+            Inst("PowerSupply1").Write("VOLT 0,(@2)");
+            Inst("PowerSupply1").Write("VOLT 0.0,(@3)");
+            Inst("PowerSupply2").Write("VOLT 5.0,(@1)");
+            Inst("PowerSupply0").Write("VOLT 0.2,(@3)");
 
-            SignalGenerator0.Write("SOURce1:FUNC SQU");
-            SignalGenerator0.Write("SOURce1:VOLTage 0.5");
-            SignalGenerator0.Write("SOURce1:VOLTage:OFFSet 0.25");
-            SignalGenerator0.Write("SOURce1:FREQ 10000");
+            Inst("SignalGenerator0").Write("SOURce1:FUNC SQU");
+            Inst("SignalGenerator0").Write("SOURce1:VOLTage 0.5");
+            Inst("SignalGenerator0").Write("SOURce1:VOLTage:OFFSet 0.25");
+            Inst("SignalGenerator0").Write("SOURce1:FREQ 10000");
             await Task.Delay(10, ct);
 
-            PowerSupply0.Write("OUTP ON,(@2)");
-            PowerSupply2.Write("OUTP ON,(@3)");
-            PowerSupply1.Write("OUTP ON,(@2)");
-            PowerSupply1.Write("OUTP ON,(@3)");
-            PowerSupply2.Write("OUTP ON,(@1)");
-            PowerSupply0.Write("OUTP ON,(@3)");
-            SignalGenerator0.Write("OUTP:STAT ON");
+            Inst("PowerSupply0").Write("OUTP ON,(@2)");
+            Inst("PowerSupply2").Write("OUTP ON,(@3)");
+            Inst("PowerSupply1").Write("OUTP ON,(@2)");
+            Inst("PowerSupply1").Write("OUTP ON,(@3)");
+            Inst("PowerSupply2").Write("OUTP ON,(@1)");
+            Inst("PowerSupply0").Write("OUTP ON,(@3)");
+            Inst("SignalGenerator0").Write("OUTP:STAT ON");
 
             await Task.Delay(1000, ct);
             gpio.SetGpioDirection(8, true);
             gpio.SetGpioDirection(9, false);
 
-            OscilloScope0.Write(":TRIG:SOUR CHAN2");
-            OscilloScope0.Write(":TRIG:LEV 5");
-            OscilloScope0.Write(":TRIG:EDGE:SLOP NEG");
+            Inst("OscilloScope0").Write(":TRIG:SOUR CHAN2");
+            Inst("OscilloScope0").Write(":TRIG:LEV 5");
+            Inst("OscilloScope0").Write(":TRIG:EDGE:SLOP NEG");
 
             double CS_Voltage = 0, FAIL_low = 0;
             for (CS_Voltage = 0.2; CS_Voltage < 0.7; CS_Voltage += 0.005)
             {
                 ct.ThrowIfCancellationRequested();
-                PowerSupply0.Write($"VOLT {CS_Voltage},(@3)");
+                Inst("PowerSupply0").Write($"VOLT {CS_Voltage},(@3)");
                 await Task.Delay(50, ct);
-                FAIL_low = double.Parse(OscilloScope0.Query(":MEAS:VAV? CHAN2"));
+                FAIL_low = double.Parse(Inst("OscilloScope0").Query(":MEAS:VAV? CHAN2"));
                 if (FAIL_low < 9)
                     break;
             }
             double VPDS = CS_Voltage;
 
-            OscilloScope0.Write(":TRIG:SOUR CHAN1");
-            OscilloScope0.Write(":TRIG:LEV 5");
-            OscilloScope0.Write(":TRIG:EDGE:SLOP NEG");
+            Inst("OscilloScope0").Write(":TRIG:SOUR CHAN1");
+            Inst("OscilloScope0").Write(":TRIG:LEV 5");
+            Inst("OscilloScope0").Write(":TRIG:EDGE:SLOP NEG");
 
             singleSheet.Write(28, y_pos, VPDS.ToString("F4"));
 
-            PowerSupply0.Write("OUTP OFF,(@2)");
-            PowerSupply2.Write("OUTP OFF,(@3)");
-            PowerSupply0.Write("OUTP OFF,(@3)");
-            PowerSupply1.Write("OUTP OFF,(@2)");
-            PowerSupply1.Write("OUTP OFF,(@3)");
-            PowerSupply2.Write("OUTP OFF,(@1)");
+            Inst("PowerSupply0").Write("OUTP OFF,(@2)");
+            Inst("PowerSupply2").Write("OUTP OFF,(@3)");
+            Inst("PowerSupply0").Write("OUTP OFF,(@3)");
+            Inst("PowerSupply1").Write("OUTP OFF,(@2)");
+            Inst("PowerSupply1").Write("OUTP OFF,(@3)");
+            Inst("PowerSupply2").Write("OUTP OFF,(@1)");
             await Task.Delay(1, ct);
         }
 
         private async Task RunCsPinOpenTest(RunTestContext ctx, CancellationToken ct, int? num = null)
         {
-            if (PowerSupply0 == null || PowerSupply1 == null || PowerSupply2 == null || OscilloScope0 == null)
-                throw new InvalidOperationException("All required instruments must be connected.");
             if (!(_bus is IGpioController gpio))
                 throw new InvalidOperationException("GPIO Control is not supported.");
+
+            CheckInstruments("PowerSupply0", "PowerSupply1", "PowerSupply2", "OscilloScope0");
 
             IReportSheet singleSheet;
             try
@@ -1930,70 +1922,70 @@
 
             int y_pos = num ?? 1;
 
-            PowerSupply0.Write("SENS:CURR:RANG 10E-3,(@3)");
-            PowerSupply0.Write("OUTP OFF,(@2)");
-            PowerSupply2.Write("OUTP OFF,(@3)");
-            PowerSupply0.Write("OUTP OFF,(@3)");
-            PowerSupply1.Write("OUTP OFF,(@2)");
-            PowerSupply1.Write("OUTP OFF,(@3)");
-            PowerSupply2.Write("OUTP OFF,(@1)");
+            Inst("PowerSupply0").Write("SENS:CURR:RANG 10E-3,(@3)");
+            Inst("PowerSupply0").Write("OUTP OFF,(@2)");
+            Inst("PowerSupply2").Write("OUTP OFF,(@3)");
+            Inst("PowerSupply0").Write("OUTP OFF,(@3)");
+            Inst("PowerSupply1").Write("OUTP OFF,(@2)");
+            Inst("PowerSupply1").Write("OUTP OFF,(@3)");
+            Inst("PowerSupply2").Write("OUTP OFF,(@1)");
             await Task.Delay(1, ct);
 
-            PowerSupply0.Write("VOLT 0.0,(@2)");
-            PowerSupply2.Write("VOLT 0.0,(@3)");
-            PowerSupply0.Write("VOLT 0.0,(@3)");
-            PowerSupply1.Write("VOLT 0.0,(@2)");
-            PowerSupply1.Write("VOLT 0.0,(@3)");
-            PowerSupply2.Write("VOLT 0.0,(@1)");
+            Inst("PowerSupply0").Write("VOLT 0.0,(@2)");
+            Inst("PowerSupply2").Write("VOLT 0.0,(@3)");
+            Inst("PowerSupply0").Write("VOLT 0.0,(@3)");
+            Inst("PowerSupply1").Write("VOLT 0.0,(@2)");
+            Inst("PowerSupply1").Write("VOLT 0.0,(@3)");
+            Inst("PowerSupply2").Write("VOLT 0.0,(@1)");
             await Task.Delay(10, ct);
 
-            PowerSupply0.Write("VOLT 13.0,(@2)");
-            PowerSupply2.Write("VOLT 1.8,(@3)");
-            PowerSupply1.Write("VOLT 1.5,(@2)");
-            PowerSupply1.Write("VOLT 0.0,(@3)");
-            PowerSupply2.Write("VOLT 5.0,(@1)");
-            PowerSupply0.Write("VOLT 0.2,(@3)");
+            Inst("PowerSupply0").Write("VOLT 13.0,(@2)");
+            Inst("PowerSupply2").Write("VOLT 1.8,(@3)");
+            Inst("PowerSupply1").Write("VOLT 1.5,(@2)");
+            Inst("PowerSupply1").Write("VOLT 0.0,(@3)");
+            Inst("PowerSupply2").Write("VOLT 5.0,(@1)");
+            Inst("PowerSupply0").Write("VOLT 0.2,(@3)");
             await Task.Delay(10, ct);
 
-            OscilloScope0.Write(":TIM:SCAL 1E-6");
-            PowerSupply0.Write("OUTP ON,(@2)");
-            PowerSupply2.Write("OUTP ON,(@3)");
-            PowerSupply1.Write("OUTP ON,(@2)");
-            PowerSupply1.Write("OUTP ON,(@3)");
-            PowerSupply2.Write("OUTP ON,(@1)");
-            PowerSupply0.Write("OUTP ON,(@3)");
+            Inst("OscilloScope0").Write(":TIM:SCAL 1E-6");
+            Inst("PowerSupply0").Write("OUTP ON,(@2)");
+            Inst("PowerSupply2").Write("OUTP ON,(@3)");
+            Inst("PowerSupply1").Write("OUTP ON,(@2)");
+            Inst("PowerSupply1").Write("OUTP ON,(@3)");
+            Inst("PowerSupply2").Write("OUTP ON,(@1)");
+            Inst("PowerSupply0").Write("OUTP ON,(@3)");
             await Task.Delay(1000, ct);
-            PowerSupply0.Write("OUTP OFF,(@3)");
+            Inst("PowerSupply0").Write("OUTP OFF,(@3)");
             await Task.Delay(1000, ct);
             gpio.SetGpioDirection(8, true);
             gpio.SetGpioDirection(9, false);
 
-            double VPCSO = double.Parse(OscilloScope0.Query(":MEAS:VAV? CHAN3"));
+            double VPCSO = double.Parse(Inst("OscilloScope0").Query(":MEAS:VAV? CHAN3"));
 
-            PowerSupply0.Write("OUTP ON,(@3)");
-            PowerSupply0.Write("VOLT 0.0,(@3)");
+            Inst("PowerSupply0").Write("OUTP ON,(@3)");
+            Inst("PowerSupply0").Write("VOLT 0.0,(@3)");
             await Task.Delay(100, ct);
 
-            double ICS = double.Parse(PowerSupply0.Query("MEAS:CURR? (@3)")) * 1000000;
+            double ICS = double.Parse(Inst("PowerSupply0").Query("MEAS:CURR? (@3)")) * 1000000;
 
             singleSheet.Write(29, y_pos, VPCSO.ToString("F4"));
             singleSheet.Write(30, y_pos, ICS.ToString("F4"));
 
-            PowerSupply0.Write("OUTP OFF,(@2)");
-            PowerSupply2.Write("OUTP OFF,(@3)");
-            PowerSupply0.Write("OUTP OFF,(@3)");
-            PowerSupply1.Write("OUTP OFF,(@2)");
-            PowerSupply1.Write("OUTP OFF,(@3)");
-            PowerSupply2.Write("OUTP OFF,(@1)");
+            Inst("PowerSupply0").Write("OUTP OFF,(@2)");
+            Inst("PowerSupply2").Write("OUTP OFF,(@3)");
+            Inst("PowerSupply0").Write("OUTP OFF,(@3)");
+            Inst("PowerSupply1").Write("OUTP OFF,(@2)");
+            Inst("PowerSupply1").Write("OUTP OFF,(@3)");
+            Inst("PowerSupply2").Write("OUTP OFF,(@1)");
             await Task.Delay(1, ct);
         }
 
         private async Task RunDsThresholdTest(RunTestContext ctx, CancellationToken ct, int? num = null)
         {
-            if (PowerSupply0 == null || PowerSupply1 == null || PowerSupply2 == null || OscilloScope0 == null || SignalGenerator0 == null)
-                throw new InvalidOperationException("All required instruments must be connected.");
             if (!(_bus is IGpioController gpio))
                 throw new InvalidOperationException("GPIO Control is not supported.");
+
+            CheckInstruments("PowerSupply0", "PowerSupply1", "PowerSupply2", "OscilloScope0", "SignalGenerator0");
 
             IReportSheet singleSheet;
             try
@@ -2004,81 +1996,81 @@
 
             int y_pos = num ?? 1;
 
-            PowerSupply0.Write("OUTP OFF,(@2)");
-            PowerSupply2.Write("OUTP OFF,(@3)");
-            PowerSupply1.Write("OUTP OFF,(@2)");
-            PowerSupply1.Write("OUTP OFF,(@3)");
-            PowerSupply2.Write("OUTP OFF,(@1)");
-            PowerSupply0.Write("OUTP OFF,(@3)");
-            SignalGenerator0.Write("OUTP:STAT OFF");
+            Inst("PowerSupply0").Write("OUTP OFF,(@2)");
+            Inst("PowerSupply2").Write("OUTP OFF,(@3)");
+            Inst("PowerSupply1").Write("OUTP OFF,(@2)");
+            Inst("PowerSupply1").Write("OUTP OFF,(@3)");
+            Inst("PowerSupply2").Write("OUTP OFF,(@1)");
+            Inst("PowerSupply0").Write("OUTP OFF,(@3)");
+            Inst("SignalGenerator0").Write("OUTP:STAT OFF");
             await Task.Delay(1, ct);
 
-            PowerSupply0.Write("VOLT 0.0,(@2)");
-            PowerSupply2.Write("VOLT 0.0,(@3)");
-            PowerSupply0.Write("VOLT 0.0,(@3)");
-            PowerSupply1.Write("VOLT 0.0,(@2)");
-            PowerSupply1.Write("VOLT 0.0,(@3)");
-            PowerSupply2.Write("VOLT 0.0,(@1)");
+            Inst("PowerSupply0").Write("VOLT 0.0,(@2)");
+            Inst("PowerSupply2").Write("VOLT 0.0,(@3)");
+            Inst("PowerSupply0").Write("VOLT 0.0,(@3)");
+            Inst("PowerSupply1").Write("VOLT 0.0,(@2)");
+            Inst("PowerSupply1").Write("VOLT 0.0,(@3)");
+            Inst("PowerSupply2").Write("VOLT 0.0,(@1)");
             await Task.Delay(10, ct);
 
-            PowerSupply0.Write("VOLT 13.0,(@2)");
-            PowerSupply2.Write("VOLT 1.8,(@3)");
-            PowerSupply1.Write("VOLT 1.5,(@2)");
-            PowerSupply1.Write("VOLT 3.3,(@3)");
-            PowerSupply2.Write("VOLT 5.0,(@1)");
-            PowerSupply0.Write("VOLT 1.8,(@3)");
+            Inst("PowerSupply0").Write("VOLT 13.0,(@2)");
+            Inst("PowerSupply2").Write("VOLT 1.8,(@3)");
+            Inst("PowerSupply1").Write("VOLT 1.5,(@2)");
+            Inst("PowerSupply1").Write("VOLT 3.3,(@3)");
+            Inst("PowerSupply2").Write("VOLT 5.0,(@1)");
+            Inst("PowerSupply0").Write("VOLT 1.8,(@3)");
 
-            SignalGenerator0.Write("SOURce1:FUNC SQU");
-            SignalGenerator0.Write("SOURce1:VOLTage 0.05");
-            SignalGenerator0.Write("SOURce1:VOLTage:OFFSet 0.0025");
-            SignalGenerator0.Write("SOURce1:FREQ 100000");
+            Inst("SignalGenerator0").Write("SOURce1:FUNC SQU");
+            Inst("SignalGenerator0").Write("SOURce1:VOLTage 0.05");
+            Inst("SignalGenerator0").Write("SOURce1:VOLTage:OFFSet 0.0025");
+            Inst("SignalGenerator0").Write("SOURce1:FREQ 100000");
             await Task.Delay(10, ct);
 
-            OscilloScope0.Write(":TIM:SCAL 1E-3");
-            PowerSupply0.Write("OUTP ON,(@2)");
-            PowerSupply2.Write("OUTP ON,(@3)");
-            PowerSupply0.Write("OUTP ON,(@3)");
-            PowerSupply1.Write("OUTP ON,(@2)");
-            PowerSupply1.Write("OUTP ON,(@3)");
-            PowerSupply2.Write("OUTP ON,(@1)");
-            SignalGenerator0.Write("OUTP:STAT ON");
-            PowerSupply0.Write("VOLT 0.2,(@3)");
-            OscilloScope0.Write(":TIM:SCAL 2E-5");
+            Inst("OscilloScope0").Write(":TIM:SCAL 1E-3");
+            Inst("PowerSupply0").Write("OUTP ON,(@2)");
+            Inst("PowerSupply2").Write("OUTP ON,(@3)");
+            Inst("PowerSupply0").Write("OUTP ON,(@3)");
+            Inst("PowerSupply1").Write("OUTP ON,(@2)");
+            Inst("PowerSupply1").Write("OUTP ON,(@3)");
+            Inst("PowerSupply2").Write("OUTP ON,(@1)");
+            Inst("SignalGenerator0").Write("OUTP:STAT ON");
+            Inst("PowerSupply0").Write("VOLT 0.2,(@3)");
+            Inst("OscilloScope0").Write(":TIM:SCAL 2E-5");
             gpio.SetGpioDirection(8, true);
             gpio.SetGpioDirection(9, false);
             await Task.Delay(1000, ct);
 
-            double GATE_H = double.Parse(OscilloScope0.Query(":MEAS:NWIDth? CHAN1")) * 1E+6;
+            double GATE_H = double.Parse(Inst("OscilloScope0").Query(":MEAS:NWIDth? CHAN1")) * 1E+6;
             await Task.Delay(10, ct);
 
-            SignalGenerator0.Write("SOURce1:FUNC SQU");
-            SignalGenerator0.Write("SOURce1:VOLTage 0.15");
-            SignalGenerator0.Write("SOURce1:VOLTage:OFFSet 0.075");
+            Inst("SignalGenerator0").Write("SOURce1:FUNC SQU");
+            Inst("SignalGenerator0").Write("SOURce1:VOLTage 0.15");
+            Inst("SignalGenerator0").Write("SOURce1:VOLTage:OFFSet 0.075");
             await Task.Delay(10, ct);
 
-            double GATE_L = double.Parse(OscilloScope0.Query(":MEAS:NWIDth? CHAN1")) * 1E+6;
+            double GATE_L = double.Parse(Inst("OscilloScope0").Query(":MEAS:NWIDth? CHAN1")) * 1E+6;
 
             if (GATE_H > 15 && GATE_L < 15)
                 singleSheet.Write(36, y_pos, "0.2");
             else
                 singleSheet.Write(36, y_pos, "0");
 
-            PowerSupply0.Write("OUTP OFF,(@2)");
-            PowerSupply2.Write("OUTP OFF,(@3)");
-            PowerSupply1.Write("OUTP OFF,(@2)");
-            PowerSupply1.Write("OUTP OFF,(@3)");
-            PowerSupply2.Write("OUTP OFF,(@1)");
-            PowerSupply0.Write("OUTP OFF,(@3)");
-            SignalGenerator0.Write("OUTP:STAT OFF");
+            Inst("PowerSupply0").Write("OUTP OFF,(@2)");
+            Inst("PowerSupply2").Write("OUTP OFF,(@3)");
+            Inst("PowerSupply1").Write("OUTP OFF,(@2)");
+            Inst("PowerSupply1").Write("OUTP OFF,(@3)");
+            Inst("PowerSupply2").Write("OUTP OFF,(@1)");
+            Inst("PowerSupply0").Write("OUTP OFF,(@3)");
+            Inst("SignalGenerator0").Write("OUTP:STAT OFF");
             await Task.Delay(1, ct);
         }
 
         private async Task RunVdrvfbOvpTest(RunTestContext ctx, CancellationToken ct, int? num = null)
         {
-            if (PowerSupply0 == null || PowerSupply1 == null || PowerSupply2 == null || OscilloScope0 == null)
-                throw new InvalidOperationException("All required instruments must be connected.");
             if (!(_bus is IGpioController gpio))
                 throw new InvalidOperationException("GPIO Control is not supported.");
+
+            CheckInstruments("PowerSupply0", "PowerSupply1", "PowerSupply2", "OscilloScope0");
 
             IReportSheet singleSheet;
             try
@@ -2089,37 +2081,37 @@
 
             int y_pos = num ?? 1;
 
-            PowerSupply0.Write("OUTP OFF,(@2)");
-            PowerSupply2.Write("OUTP OFF,(@3)");
-            PowerSupply0.Write("OUTP OFF,(@3)");
-            PowerSupply1.Write("OUTP OFF,(@2)");
-            PowerSupply1.Write("OUTP OFF,(@3)");
-            PowerSupply2.Write("OUTP OFF,(@1)");
+            Inst("PowerSupply0").Write("OUTP OFF,(@2)");
+            Inst("PowerSupply2").Write("OUTP OFF,(@3)");
+            Inst("PowerSupply0").Write("OUTP OFF,(@3)");
+            Inst("PowerSupply1").Write("OUTP OFF,(@2)");
+            Inst("PowerSupply1").Write("OUTP OFF,(@3)");
+            Inst("PowerSupply2").Write("OUTP OFF,(@1)");
             await Task.Delay(1, ct);
 
-            PowerSupply0.Write("VOLT 0.0,(@2)");
-            PowerSupply2.Write("VOLT 0.0,(@3)");
-            PowerSupply0.Write("VOLT 0.0,(@3)");
-            PowerSupply1.Write("VOLT 0.0,(@2)");
-            PowerSupply1.Write("VOLT 0.0,(@3)");
-            PowerSupply2.Write("VOLT 0.0,(@1)");
+            Inst("PowerSupply0").Write("VOLT 0.0,(@2)");
+            Inst("PowerSupply2").Write("VOLT 0.0,(@3)");
+            Inst("PowerSupply0").Write("VOLT 0.0,(@3)");
+            Inst("PowerSupply1").Write("VOLT 0.0,(@2)");
+            Inst("PowerSupply1").Write("VOLT 0.0,(@3)");
+            Inst("PowerSupply2").Write("VOLT 0.0,(@1)");
             await Task.Delay(10, ct);
 
-            PowerSupply0.Write("VOLT 13.0,(@2)");
-            PowerSupply2.Write("VOLT 1.8,(@3)");
-            PowerSupply0.Write("VOLT 0.2,(@3)");
-            PowerSupply1.Write("VOLT 1.5,(@2)");
-            PowerSupply1.Write("VOLT 5.0,(@3)");
-            PowerSupply2.Write("VOLT 5.0,(@1)");
+            Inst("PowerSupply0").Write("VOLT 13.0,(@2)");
+            Inst("PowerSupply2").Write("VOLT 1.8,(@3)");
+            Inst("PowerSupply0").Write("VOLT 0.2,(@3)");
+            Inst("PowerSupply1").Write("VOLT 1.5,(@2)");
+            Inst("PowerSupply1").Write("VOLT 5.0,(@3)");
+            Inst("PowerSupply2").Write("VOLT 5.0,(@1)");
             await Task.Delay(10, ct);
 
-            OscilloScope0.Write(":TIM:SCAL 1E-3");
-            PowerSupply0.Write("OUTP ON,(@2)");
-            PowerSupply2.Write("OUTP ON,(@3)");
-            PowerSupply0.Write("OUTP ON,(@3)");
-            PowerSupply1.Write("OUTP ON,(@2)");
-            PowerSupply1.Write("OUTP ON,(@3)");
-            PowerSupply2.Write("OUTP ON,(@1)");
+            Inst("OscilloScope0").Write(":TIM:SCAL 1E-3");
+            Inst("PowerSupply0").Write("OUTP ON,(@2)");
+            Inst("PowerSupply2").Write("OUTP ON,(@3)");
+            Inst("PowerSupply0").Write("OUTP ON,(@3)");
+            Inst("PowerSupply1").Write("OUTP ON,(@2)");
+            Inst("PowerSupply1").Write("OUTP ON,(@3)");
+            Inst("PowerSupply2").Write("OUTP ON,(@1)");
             await Task.Delay(1000, ct);
             gpio.SetGpioDirection(8, true);
             gpio.SetGpioDirection(9, false);
@@ -2128,9 +2120,9 @@
             for (VDRVFB_Voltage = 2.0; VDRVFB_Voltage < 2.4; VDRVFB_Voltage += 0.02)
             {
                 ct.ThrowIfCancellationRequested();
-                PowerSupply1.Write($"VOLT {VDRVFB_Voltage},(@2)");
+                Inst("PowerSupply1").Write($"VOLT {VDRVFB_Voltage},(@2)");
                 await Task.Delay(50, ct);
-                GATE_Low = double.Parse(OscilloScope0.Query(":MEAS:VAV? CHAN1"));
+                GATE_Low = double.Parse(Inst("OscilloScope0").Query(":MEAS:VAV? CHAN1"));
                 if (GATE_Low < 1)
                     break;
             }
@@ -2140,9 +2132,9 @@
             for (VDRVFB_Voltage = VDRVFBOVP; VDRVFB_Voltage >= 1.9; VDRVFB_Voltage -= 0.02)
             {
                 ct.ThrowIfCancellationRequested();
-                PowerSupply1.Write($"VOLT {VDRVFB_Voltage},(@2)");
+                Inst("PowerSupply1").Write($"VOLT {VDRVFB_Voltage},(@2)");
                 await Task.Delay(50, ct);
-                GATE_High = double.Parse(OscilloScope0.Query(":MEAS:VAV? CHAN1"));
+                GATE_High = double.Parse(Inst("OscilloScope0").Query(":MEAS:VAV? CHAN1"));
                 if (GATE_High > 1)
                     break;
             }
@@ -2154,21 +2146,21 @@
             singleSheet.Write(39, y_pos, VDRVFBOVPR.ToString("F4"));
             singleSheet.Write(40, y_pos, VDOVPHY.ToString("F4"));
 
-            PowerSupply0.Write("OUTP OFF,(@2)");
-            PowerSupply2.Write("OUTP OFF,(@3)");
-            PowerSupply0.Write("OUTP OFF,(@3)");
-            PowerSupply1.Write("OUTP OFF,(@2)");
-            PowerSupply1.Write("OUTP OFF,(@3)");
-            PowerSupply2.Write("OUTP OFF,(@1)");
+            Inst("PowerSupply0").Write("OUTP OFF,(@2)");
+            Inst("PowerSupply2").Write("OUTP OFF,(@3)");
+            Inst("PowerSupply0").Write("OUTP OFF,(@3)");
+            Inst("PowerSupply1").Write("OUTP OFF,(@2)");
+            Inst("PowerSupply1").Write("OUTP OFF,(@3)");
+            Inst("PowerSupply2").Write("OUTP OFF,(@1)");
             await Task.Delay(1, ct);
         }
 
         private async Task RunVdrvfbUvpTest(RunTestContext ctx, CancellationToken ct, int? num = null)
         {
-            if (PowerSupply0 == null || PowerSupply1 == null || PowerSupply2 == null || OscilloScope0 == null)
-                throw new InvalidOperationException("All required instruments must be connected.");
             if (!(_bus is IGpioController gpio))
                 throw new InvalidOperationException("GPIO Control is not supported.");
+
+            CheckInstruments("PowerSupply0", "PowerSupply1", "PowerSupply2", "OscilloScope0");
 
             IReportSheet singleSheet;
             try
@@ -2179,36 +2171,36 @@
 
             int y_pos = num ?? 1;
 
-            PowerSupply0.Write("OUTP OFF,(@2)");
-            PowerSupply2.Write("OUTP OFF,(@3)");
-            PowerSupply0.Write("OUTP OFF,(@3)");
-            PowerSupply1.Write("OUTP OFF,(@2)");
-            PowerSupply1.Write("OUTP OFF,(@3)");
-            PowerSupply2.Write("OUTP OFF,(@1)");
+            Inst("PowerSupply0").Write("OUTP OFF,(@2)");
+            Inst("PowerSupply2").Write("OUTP OFF,(@3)");
+            Inst("PowerSupply0").Write("OUTP OFF,(@3)");
+            Inst("PowerSupply1").Write("OUTP OFF,(@2)");
+            Inst("PowerSupply1").Write("OUTP OFF,(@3)");
+            Inst("PowerSupply2").Write("OUTP OFF,(@1)");
             await Task.Delay(1, ct);
 
-            PowerSupply0.Write("VOLT 0.0,(@2)");
-            PowerSupply2.Write("VOLT 0.0,(@3)");
-            PowerSupply0.Write("VOLT 0.0,(@3)");
-            PowerSupply1.Write("VOLT 0.0,(@2)");
-            PowerSupply1.Write("VOLT 0.0,(@3)");
-            PowerSupply2.Write("VOLT 0.0,(@1)");
+            Inst("PowerSupply0").Write("VOLT 0.0,(@2)");
+            Inst("PowerSupply2").Write("VOLT 0.0,(@3)");
+            Inst("PowerSupply0").Write("VOLT 0.0,(@3)");
+            Inst("PowerSupply1").Write("VOLT 0.0,(@2)");
+            Inst("PowerSupply1").Write("VOLT 0.0,(@3)");
+            Inst("PowerSupply2").Write("VOLT 0.0,(@1)");
             await Task.Delay(10, ct);
 
-            PowerSupply0.Write("VOLT 13.0,(@2)");
-            PowerSupply2.Write("VOLT 1.8,(@3)");
-            PowerSupply0.Write("VOLT 0.2,(@3)");
-            PowerSupply1.Write("VOLT 1.5,(@2)");
-            PowerSupply1.Write("VOLT 5.0,(@3)");
-            PowerSupply2.Write("VOLT 5.0,(@1)");
+            Inst("PowerSupply0").Write("VOLT 13.0,(@2)");
+            Inst("PowerSupply2").Write("VOLT 1.8,(@3)");
+            Inst("PowerSupply0").Write("VOLT 0.2,(@3)");
+            Inst("PowerSupply1").Write("VOLT 1.5,(@2)");
+            Inst("PowerSupply1").Write("VOLT 5.0,(@3)");
+            Inst("PowerSupply2").Write("VOLT 5.0,(@1)");
             await Task.Delay(10, ct);
 
-            PowerSupply0.Write("OUTP ON,(@2)");
-            PowerSupply2.Write("OUTP ON,(@3)");
-            PowerSupply0.Write("OUTP ON,(@3)");
-            PowerSupply1.Write("OUTP ON,(@2)");
-            PowerSupply1.Write("OUTP ON,(@3)");
-            PowerSupply2.Write("OUTP ON,(@1)");
+            Inst("PowerSupply0").Write("OUTP ON,(@2)");
+            Inst("PowerSupply2").Write("OUTP ON,(@3)");
+            Inst("PowerSupply0").Write("OUTP ON,(@3)");
+            Inst("PowerSupply1").Write("OUTP ON,(@2)");
+            Inst("PowerSupply1").Write("OUTP ON,(@3)");
+            Inst("PowerSupply2").Write("OUTP ON,(@1)");
             await Task.Delay(1000, ct);
             gpio.SetGpioDirection(8, true);
             gpio.SetGpioDirection(9, false);
@@ -2217,9 +2209,9 @@
             for (VDRVFB_Voltage = 1.3; VDRVFB_Voltage >= 0.9; VDRVFB_Voltage -= 0.02)
             {
                 ct.ThrowIfCancellationRequested();
-                PowerSupply1.Write($"VOLT {VDRVFB_Voltage},(@2)");
+                Inst("PowerSupply1").Write($"VOLT {VDRVFB_Voltage},(@2)");
                 await Task.Delay(50, ct);
-                GATE_Low = double.Parse(OscilloScope0.Query(":MEAS:VAV? CHAN1"));
+                GATE_Low = double.Parse(Inst("OscilloScope0").Query(":MEAS:VAV? CHAN1"));
                 if (GATE_Low < 1)
                     break;
             }
@@ -2229,9 +2221,9 @@
             for (VDRVFB_Voltage = VDRVFBUVP; VDRVFB_Voltage < 1.4; VDRVFB_Voltage += 0.02)
             {
                 ct.ThrowIfCancellationRequested();
-                PowerSupply1.Write($"VOLT {VDRVFB_Voltage},(@2)");
+                Inst("PowerSupply1").Write($"VOLT {VDRVFB_Voltage},(@2)");
                 await Task.Delay(50, ct);
-                GATE_High = double.Parse(OscilloScope0.Query(":MEAS:VAV? CHAN1"));
+                GATE_High = double.Parse(Inst("OscilloScope0").Query(":MEAS:VAV? CHAN1"));
                 if (GATE_High > 1)
                     break;
             }
@@ -2243,21 +2235,21 @@
             singleSheet.Write(42, y_pos, VDRVFBUVPR.ToString("F4"));
             singleSheet.Write(43, y_pos, VDUVPHY.ToString("F4"));
 
-            PowerSupply0.Write("OUTP OFF,(@2)");
-            PowerSupply2.Write("OUTP OFF,(@3)");
-            PowerSupply0.Write("OUTP OFF,(@3)");
-            PowerSupply1.Write("OUTP OFF,(@2)");
-            PowerSupply1.Write("OUTP OFF,(@3)");
-            PowerSupply2.Write("OUTP OFF,(@1)");
+            Inst("PowerSupply0").Write("OUTP OFF,(@2)");
+            Inst("PowerSupply2").Write("OUTP OFF,(@3)");
+            Inst("PowerSupply0").Write("OUTP OFF,(@3)");
+            Inst("PowerSupply1").Write("OUTP OFF,(@2)");
+            Inst("PowerSupply1").Write("OUTP OFF,(@3)");
+            Inst("PowerSupply2").Write("OUTP OFF,(@1)");
             await Task.Delay(1, ct);
         }
 
         private async Task RunVccOvpTest(RunTestContext ctx, CancellationToken ct, int? num = null)
         {
-            if (PowerSupply0 == null || PowerSupply1 == null || PowerSupply2 == null || OscilloScope0 == null)
-                throw new InvalidOperationException("All required instruments must be connected.");
             if (!(_bus is IGpioController gpio))
                 throw new InvalidOperationException("GPIO Control is not supported.");
+
+            CheckInstruments("PowerSupply0", "PowerSupply1", "PowerSupply2", "OscilloScope0");
 
             IReportSheet singleSheet;
             try
@@ -2268,37 +2260,37 @@
 
             int y_pos = num ?? 1;
 
-            PowerSupply0.Write("OUTP OFF,(@2)");
-            PowerSupply2.Write("OUTP OFF,(@3)");
-            PowerSupply0.Write("OUTP OFF,(@3)");
-            PowerSupply1.Write("OUTP OFF,(@2)");
-            PowerSupply1.Write("OUTP OFF,(@3)");
-            PowerSupply2.Write("OUTP OFF,(@1)");
+            Inst("PowerSupply0").Write("OUTP OFF,(@2)");
+            Inst("PowerSupply2").Write("OUTP OFF,(@3)");
+            Inst("PowerSupply0").Write("OUTP OFF,(@3)");
+            Inst("PowerSupply1").Write("OUTP OFF,(@2)");
+            Inst("PowerSupply1").Write("OUTP OFF,(@3)");
+            Inst("PowerSupply2").Write("OUTP OFF,(@1)");
             await Task.Delay(1, ct);
 
-            PowerSupply0.Write("VOLT 0.0,(@2)");
-            PowerSupply2.Write("VOLT 0.0,(@3)");
-            PowerSupply0.Write("VOLT 0.0,(@3)");
-            PowerSupply1.Write("VOLT 0.0,(@2)");
-            PowerSupply1.Write("VOLT 0.0,(@3)");
-            PowerSupply2.Write("VOLT 0.0,(@1)");
+            Inst("PowerSupply0").Write("VOLT 0.0,(@2)");
+            Inst("PowerSupply2").Write("VOLT 0.0,(@3)");
+            Inst("PowerSupply0").Write("VOLT 0.0,(@3)");
+            Inst("PowerSupply1").Write("VOLT 0.0,(@2)");
+            Inst("PowerSupply1").Write("VOLT 0.0,(@3)");
+            Inst("PowerSupply2").Write("VOLT 0.0,(@1)");
             await Task.Delay(10, ct);
 
-            PowerSupply0.Write("VOLT 13.0,(@2)");
-            PowerSupply2.Write("VOLT 1.8,(@3)");
-            PowerSupply0.Write("VOLT 0.2,(@3)");
-            PowerSupply1.Write("VOLT 1.5,(@2)");
-            PowerSupply1.Write("VOLT 5.0,(@3)");
-            PowerSupply2.Write("VOLT 5.0,(@1)");
+            Inst("PowerSupply0").Write("VOLT 13.0,(@2)");
+            Inst("PowerSupply2").Write("VOLT 1.8,(@3)");
+            Inst("PowerSupply0").Write("VOLT 0.2,(@3)");
+            Inst("PowerSupply1").Write("VOLT 1.5,(@2)");
+            Inst("PowerSupply1").Write("VOLT 5.0,(@3)");
+            Inst("PowerSupply2").Write("VOLT 5.0,(@1)");
             await Task.Delay(10, ct);
 
-            OscilloScope0.Write(":TIM:SCAL 2E-5");
-            PowerSupply0.Write("OUTP ON,(@2)");
-            PowerSupply2.Write("OUTP ON,(@3)");
-            PowerSupply0.Write("OUTP ON,(@3)");
-            PowerSupply1.Write("OUTP ON,(@2)");
-            PowerSupply1.Write("OUTP ON,(@3)");
-            PowerSupply2.Write("OUTP ON,(@1)");
+            Inst("OscilloScope0").Write(":TIM:SCAL 2E-5");
+            Inst("PowerSupply0").Write("OUTP ON,(@2)");
+            Inst("PowerSupply2").Write("OUTP ON,(@3)");
+            Inst("PowerSupply0").Write("OUTP ON,(@3)");
+            Inst("PowerSupply1").Write("OUTP ON,(@2)");
+            Inst("PowerSupply1").Write("OUTP ON,(@3)");
+            Inst("PowerSupply2").Write("OUTP ON,(@1)");
             await Task.Delay(1000, ct);
             gpio.SetGpioDirection(8, true);
             gpio.SetGpioDirection(9, false);
@@ -2307,9 +2299,9 @@
             for (VCC_Voltage = 14.7; VCC_Voltage < 16.5; VCC_Voltage += 0.02)
             {
                 ct.ThrowIfCancellationRequested();
-                PowerSupply0.Write($"VOLT {VCC_Voltage},(@2)");
+                Inst("PowerSupply0").Write($"VOLT {VCC_Voltage},(@2)");
                 await Task.Delay(50, ct);
-                FAIL_Low = double.Parse(OscilloScope0.Query(":MEAS:VAV? CHAN2"));
+                FAIL_Low = double.Parse(Inst("OscilloScope0").Query(":MEAS:VAV? CHAN2"));
                 if (FAIL_Low < 5)
                     break;
             }
@@ -2319,9 +2311,9 @@
             for (VCC_Voltage = 8.0; VCC_Voltage >= 6.1; VCC_Voltage -= 0.02)
             {
                 ct.ThrowIfCancellationRequested();
-                PowerSupply0.Write($"VOLT {VCC_Voltage},(@2)");
+                Inst("PowerSupply0").Write($"VOLT {VCC_Voltage},(@2)");
                 await Task.Delay(50, ct);
-                FAIL_High = double.Parse(OscilloScope0.Query(":MEAS:VAV? CHAN2"));
+                FAIL_High = double.Parse(Inst("OscilloScope0").Query(":MEAS:VAV? CHAN2"));
                 if (FAIL_High > 5)
                     break;
             }
@@ -2331,21 +2323,21 @@
             singleSheet.Write(44, y_pos, VCCOVP.ToString("F4"));
             singleSheet.Write(45, y_pos, VCCOVPR.ToString("F4"));
 
-            PowerSupply0.Write("OUTP OFF,(@2)");
-            PowerSupply2.Write("OUTP OFF,(@3)");
-            PowerSupply0.Write("OUTP OFF,(@3)");
-            PowerSupply1.Write("OUTP OFF,(@2)");
-            PowerSupply1.Write("OUTP OFF,(@3)");
-            PowerSupply2.Write("OUTP OFF,(@1)");
+            Inst("PowerSupply0").Write("OUTP OFF,(@2)");
+            Inst("PowerSupply2").Write("OUTP OFF,(@3)");
+            Inst("PowerSupply0").Write("OUTP OFF,(@3)");
+            Inst("PowerSupply1").Write("OUTP OFF,(@2)");
+            Inst("PowerSupply1").Write("OUTP OFF,(@3)");
+            Inst("PowerSupply2").Write("OUTP OFF,(@1)");
             await Task.Delay(1, ct);
         }
 
         private async Task RunStandbyModeTest(RunTestContext ctx, CancellationToken ct, int? num = null)
         {
-            if (PowerSupply0 == null || PowerSupply1 == null || PowerSupply2 == null || DigitalMultimeter0 == null)
-                throw new InvalidOperationException("All required instruments must be connected.");
             if (!(_bus is IGpioController gpio))
                 throw new InvalidOperationException("GPIO Control is not supported.");
+
+            CheckInstruments("PowerSupply0", "PowerSupply1", "PowerSupply2", "DigitalMultimeter0");
 
             IReportSheet singleSheet;
             try
@@ -2356,67 +2348,67 @@
 
             int y_pos = num ?? 1;
 
-            PowerSupply0.Write("SENS:CURR:RANG 10E-3,(@2)");
-            PowerSupply0.Write("OUTP OFF,(@2)");
-            PowerSupply2.Write("OUTP OFF,(@3)");
-            PowerSupply0.Write("OUTP OFF,(@3)");
-            PowerSupply1.Write("OUTP OFF,(@2)");
-            PowerSupply1.Write("OUTP OFF,(@3)");
-            PowerSupply2.Write("OUTP OFF,(@1)");
+            Inst("PowerSupply0").Write("SENS:CURR:RANG 10E-3,(@2)");
+            Inst("PowerSupply0").Write("OUTP OFF,(@2)");
+            Inst("PowerSupply2").Write("OUTP OFF,(@3)");
+            Inst("PowerSupply0").Write("OUTP OFF,(@3)");
+            Inst("PowerSupply1").Write("OUTP OFF,(@2)");
+            Inst("PowerSupply1").Write("OUTP OFF,(@3)");
+            Inst("PowerSupply2").Write("OUTP OFF,(@1)");
             await Task.Delay(1, ct);
 
-            PowerSupply0.Write("VOLT 0.0,(@2)");
-            PowerSupply2.Write("VOLT 0.0,(@3)");
-            PowerSupply0.Write("VOLT 0.0,(@3)");
-            PowerSupply1.Write("VOLT 0.0,(@2)");
-            PowerSupply1.Write("VOLT 0.0,(@3)");
-            PowerSupply2.Write("VOLT 0.0,(@1)");
+            Inst("PowerSupply0").Write("VOLT 0.0,(@2)");
+            Inst("PowerSupply2").Write("VOLT 0.0,(@3)");
+            Inst("PowerSupply0").Write("VOLT 0.0,(@3)");
+            Inst("PowerSupply1").Write("VOLT 0.0,(@2)");
+            Inst("PowerSupply1").Write("VOLT 0.0,(@3)");
+            Inst("PowerSupply2").Write("VOLT 0.0,(@1)");
             await Task.Delay(10, ct);
 
-            PowerSupply0.Write("VOLT 13.0,(@2)");
-            PowerSupply2.Write("VOLT 1.8,(@3)");
-            PowerSupply0.Write("VOLT 0.2,(@3)");
-            PowerSupply1.Write("VOLT 1.5,(@2)");
-            PowerSupply1.Write("VOLT 5.0,(@3)");
-            PowerSupply2.Write("VOLT 5.0,(@1)");
+            Inst("PowerSupply0").Write("VOLT 13.0,(@2)");
+            Inst("PowerSupply2").Write("VOLT 1.8,(@3)");
+            Inst("PowerSupply0").Write("VOLT 0.2,(@3)");
+            Inst("PowerSupply1").Write("VOLT 1.5,(@2)");
+            Inst("PowerSupply1").Write("VOLT 5.0,(@3)");
+            Inst("PowerSupply2").Write("VOLT 5.0,(@1)");
             await Task.Delay(10, ct);
 
-            PowerSupply0.Write("OUTP ON,(@2)");
-            PowerSupply2.Write("OUTP ON,(@3)");
-            PowerSupply0.Write("OUTP ON,(@3)");
-            PowerSupply1.Write("OUTP ON,(@2)");
-            PowerSupply1.Write("OUTP ON,(@3)");
-            PowerSupply2.Write("OUTP ON,(@1)");
+            Inst("PowerSupply0").Write("OUTP ON,(@2)");
+            Inst("PowerSupply2").Write("OUTP ON,(@3)");
+            Inst("PowerSupply0").Write("OUTP ON,(@3)");
+            Inst("PowerSupply1").Write("OUTP ON,(@2)");
+            Inst("PowerSupply1").Write("OUTP ON,(@3)");
+            Inst("PowerSupply2").Write("OUTP ON,(@1)");
             await Task.Delay(1000, ct);
             gpio.SetGpioDirection(8, true);
             gpio.SetGpioDirection(9, false);
 
-            PowerSupply2.Write("VOLT 0.0,(@1)");
-            PowerSupply1.Write("VOLT 0.0,(@2)");
+            Inst("PowerSupply2").Write("VOLT 0.0,(@1)");
+            Inst("PowerSupply1").Write("VOLT 0.0,(@2)");
             await Task.Delay(1000, ct);
 
-            double iSTBY = double.Parse(PowerSupply0.Query("MEAS:CURR? (@2)")) * 1000000;
+            double iSTBY = double.Parse(Inst("PowerSupply0").Query("MEAS:CURR? (@2)")) * 1000000;
             await Task.Delay(10, ct);
-            double VREFst = double.Parse(DigitalMultimeter0.Query(":MEAS:VOLT:DC?"));
+            double VREFst = double.Parse(Inst("DigitalMultimeter0").Query(":MEAS:VOLT:DC?"));
             await Task.Delay(10, ct);
 
             singleSheet.Write(47, y_pos, iSTBY.ToString("F4"));
             singleSheet.Write(49, y_pos, VREFst.ToString("F4"));
 
-            PowerSupply0.Write("OUTP OFF,(@2)");
-            PowerSupply2.Write("OUTP OFF,(@3)");
-            PowerSupply0.Write("OUTP OFF,(@3)");
-            PowerSupply1.Write("OUTP OFF,(@2)");
-            PowerSupply1.Write("OUTP OFF,(@3)");
-            PowerSupply2.Write("OUTP OFF,(@1)");
+            Inst("PowerSupply0").Write("OUTP OFF,(@2)");
+            Inst("PowerSupply2").Write("OUTP OFF,(@3)");
+            Inst("PowerSupply0").Write("OUTP OFF,(@3)");
+            Inst("PowerSupply1").Write("OUTP OFF,(@2)");
+            Inst("PowerSupply1").Write("OUTP OFF,(@3)");
+            Inst("PowerSupply2").Write("OUTP OFF,(@1)");
         }
 
         private async Task RunV2drefTest(RunTestContext ctx, CancellationToken ct, int? num = null)
         {
-            if (PowerSupply0 == null || PowerSupply1 == null || PowerSupply2 == null || OscilloScope0 == null || SignalGenerator0 == null)
-                throw new InvalidOperationException("All required instruments must be connected.");
             if (!(_bus is IGpioController gpio))
                 throw new InvalidOperationException("GPIO Control is not supported.");
+
+            CheckInstruments("PowerSupply0", "PowerSupply1", "PowerSupply2", "OscilloScope0", "SignalGenerator0");
 
             IReportSheet singleSheet;
             try
@@ -2427,44 +2419,44 @@
 
             int y_pos = num ?? 1;
 
-            PowerSupply0.Write("OUTP OFF,(@2)");
-            PowerSupply2.Write("OUTP OFF,(@3)");
-            PowerSupply0.Write("OUTP OFF,(@3)");
-            PowerSupply1.Write("OUTP OFF,(@2)");
-            PowerSupply1.Write("OUTP OFF,(@3)");
-            PowerSupply2.Write("OUTP OFF,(@1)");
-            SignalGenerator0.Write("OUTP:STAT OFF");
+            Inst("PowerSupply0").Write("OUTP OFF,(@2)");
+            Inst("PowerSupply2").Write("OUTP OFF,(@3)");
+            Inst("PowerSupply0").Write("OUTP OFF,(@3)");
+            Inst("PowerSupply1").Write("OUTP OFF,(@2)");
+            Inst("PowerSupply1").Write("OUTP OFF,(@3)");
+            Inst("PowerSupply2").Write("OUTP OFF,(@1)");
+            Inst("SignalGenerator0").Write("OUTP:STAT OFF");
             await Task.Delay(1, ct);
 
-            PowerSupply0.Write("VOLT 0.0,(@2)");
-            PowerSupply2.Write("VOLT 0.0,(@3)");
-            PowerSupply0.Write("VOLT 0.0,(@3)");
-            PowerSupply1.Write("VOLT 0.0,(@2)");
-            PowerSupply1.Write("VOLT 0.0,(@3)");
-            PowerSupply2.Write("VOLT 0.0,(@1)");
+            Inst("PowerSupply0").Write("VOLT 0.0,(@2)");
+            Inst("PowerSupply2").Write("VOLT 0.0,(@3)");
+            Inst("PowerSupply0").Write("VOLT 0.0,(@3)");
+            Inst("PowerSupply1").Write("VOLT 0.0,(@2)");
+            Inst("PowerSupply1").Write("VOLT 0.0,(@3)");
+            Inst("PowerSupply2").Write("VOLT 0.0,(@1)");
             await Task.Delay(10, ct);
 
-            PowerSupply0.Write("VOLT 13.0,(@2)");
-            PowerSupply2.Write("VOLT 1.8,(@3)");
-            PowerSupply1.Write("VOLT 1.5,(@2)");
-            PowerSupply1.Write("VOLT 5.0,(@3)");
-            PowerSupply2.Write("VOLT 5.0,(@1)");
-            PowerSupply0.Write("VOLT 1.35,(@3)");
+            Inst("PowerSupply0").Write("VOLT 13.0,(@2)");
+            Inst("PowerSupply2").Write("VOLT 1.8,(@3)");
+            Inst("PowerSupply1").Write("VOLT 1.5,(@2)");
+            Inst("PowerSupply1").Write("VOLT 5.0,(@3)");
+            Inst("PowerSupply2").Write("VOLT 5.0,(@1)");
+            Inst("PowerSupply0").Write("VOLT 1.35,(@3)");
 
-            OscilloScope0.Write(":TIM:SCAL 2E-3");
-            SignalGenerator0.Write("SOURce1:FUNC SQU");
-            SignalGenerator0.Write("SOURce1:VOLTage 0.5");
-            SignalGenerator0.Write("SOURce1:VOLTage:OFFSet 0.25");
-            SignalGenerator0.Write("SOURce1:FREQ 10000");
+            Inst("OscilloScope0").Write(":TIM:SCAL 2E-3");
+            Inst("SignalGenerator0").Write("SOURce1:FUNC SQU");
+            Inst("SignalGenerator0").Write("SOURce1:VOLTage 0.5");
+            Inst("SignalGenerator0").Write("SOURce1:VOLTage:OFFSet 0.25");
+            Inst("SignalGenerator0").Write("SOURce1:FREQ 10000");
             await Task.Delay(10, ct);
 
-            PowerSupply0.Write("OUTP ON,(@2)");
-            PowerSupply2.Write("OUTP ON,(@3)");
-            PowerSupply0.Write("OUTP ON,(@3)");
-            PowerSupply1.Write("OUTP ON,(@2)");
-            PowerSupply1.Write("OUTP ON,(@3)");
-            PowerSupply2.Write("OUTP ON,(@1)");
-            SignalGenerator0.Write("OUTP:STAT ON");
+            Inst("PowerSupply0").Write("OUTP ON,(@2)");
+            Inst("PowerSupply2").Write("OUTP ON,(@3)");
+            Inst("PowerSupply0").Write("OUTP ON,(@3)");
+            Inst("PowerSupply1").Write("OUTP ON,(@2)");
+            Inst("PowerSupply1").Write("OUTP ON,(@3)");
+            Inst("PowerSupply2").Write("OUTP ON,(@1)");
+            Inst("SignalGenerator0").Write("OUTP:STAT ON");
             gpio.SetGpioDirection(8, true);
             gpio.SetGpioDirection(9, false);
             await Task.Delay(1000, ct);
@@ -2476,13 +2468,13 @@
                 ADIM_Min = 65535;
                 ADIM_Max = 0;
 
-                PowerSupply0.Write($"VOLT {CS_Voltage},(@3)");
+                Inst("PowerSupply0").Write($"VOLT {CS_Voltage},(@3)");
                 await Task.Delay(100, ct);
                 for (int j = 0; j < 10; j++)
                 {
-                    OscilloScope0.Write(":SING");
+                    Inst("OscilloScope0").Write(":SING");
                     await Task.Delay(100, ct);
-                    GATE_ON = double.Parse(OscilloScope0.Query(":MEAS:PPUL? CHAN1"));
+                    GATE_ON = double.Parse(Inst("OscilloScope0").Query(":MEAS:PPUL? CHAN1"));
 
                     if (ADIM_Min > GATE_ON)
                         ADIM_Min = GATE_ON;
@@ -2503,22 +2495,22 @@
 
             singleSheet.Write(50, y_pos, V2DREF.ToString("F4"));
 
-            PowerSupply0.Write("OUTP OFF,(@2)");
-            PowerSupply2.Write("OUTP OFF,(@3)");
-            PowerSupply0.Write("OUTP OFF,(@3)");
-            PowerSupply1.Write("OUTP OFF,(@2)");
-            PowerSupply1.Write("OUTP OFF,(@3)");
-            PowerSupply2.Write("OUTP OFF,(@1)");
-            SignalGenerator0.Write("OUTP:STAT OFF");
+            Inst("PowerSupply0").Write("OUTP OFF,(@2)");
+            Inst("PowerSupply2").Write("OUTP OFF,(@3)");
+            Inst("PowerSupply0").Write("OUTP OFF,(@3)");
+            Inst("PowerSupply1").Write("OUTP OFF,(@2)");
+            Inst("PowerSupply1").Write("OUTP OFF,(@3)");
+            Inst("PowerSupply2").Write("OUTP OFF,(@1)");
+            Inst("SignalGenerator0").Write("OUTP:STAT OFF");
             await Task.Delay(1, ct);
         }
 
         private async Task RunV2dMinMaxTest(RunTestContext ctx, CancellationToken ct, int? num = null)
         {
-            if (PowerSupply0 == null || PowerSupply1 == null || PowerSupply2 == null || OscilloScope0 == null || SignalGenerator0 == null)
-                throw new InvalidOperationException("All required instruments must be connected.");
             if (!(_bus is IGpioController gpio))
                 throw new InvalidOperationException("GPIO Control is not supported.");
+
+            CheckInstruments("PowerSupply0", "PowerSupply1", "PowerSupply2", "OscilloScope0", "SignalGenerator0");
 
             IReportSheet singleSheet;
             try
@@ -2529,43 +2521,43 @@
 
             int y_pos = num ?? 1;
 
-            PowerSupply0.Write("OUTP OFF,(@2)");
-            PowerSupply2.Write("OUTP OFF,(@3)");
-            PowerSupply0.Write("OUTP OFF,(@3)");
-            PowerSupply1.Write("OUTP OFF,(@2)");
-            PowerSupply1.Write("OUTP OFF,(@3)");
-            PowerSupply2.Write("OUTP OFF,(@1)");
-            SignalGenerator0.Write("OUTP:STAT OFF");
+            Inst("PowerSupply0").Write("OUTP OFF,(@2)");
+            Inst("PowerSupply2").Write("OUTP OFF,(@3)");
+            Inst("PowerSupply0").Write("OUTP OFF,(@3)");
+            Inst("PowerSupply1").Write("OUTP OFF,(@2)");
+            Inst("PowerSupply1").Write("OUTP OFF,(@3)");
+            Inst("PowerSupply2").Write("OUTP OFF,(@1)");
+            Inst("SignalGenerator0").Write("OUTP:STAT OFF");
             await Task.Delay(1, ct);
 
-            PowerSupply0.Write("VOLT 0.0,(@2)");
-            PowerSupply2.Write("VOLT 0.0,(@3)");
-            PowerSupply0.Write("VOLT 0.0,(@3)");
-            PowerSupply1.Write("VOLT 0.0,(@2)");
-            PowerSupply1.Write("VOLT 0.0,(@3)");
-            PowerSupply2.Write("VOLT 0.0,(@1)");
+            Inst("PowerSupply0").Write("VOLT 0.0,(@2)");
+            Inst("PowerSupply2").Write("VOLT 0.0,(@3)");
+            Inst("PowerSupply0").Write("VOLT 0.0,(@3)");
+            Inst("PowerSupply1").Write("VOLT 0.0,(@2)");
+            Inst("PowerSupply1").Write("VOLT 0.0,(@3)");
+            Inst("PowerSupply2").Write("VOLT 0.0,(@1)");
             await Task.Delay(10, ct);
 
-            PowerSupply0.Write("VOLT 13.0,(@2)");
-            PowerSupply2.Write("VOLT 1.8,(@3)");
-            PowerSupply1.Write("VOLT 1.5,(@2)");
-            PowerSupply1.Write("VOLT 3.3,(@3)");
-            PowerSupply2.Write("VOLT 5.0,(@1)");
-            PowerSupply0.Write("VOLT 1.35,(@3)");
+            Inst("PowerSupply0").Write("VOLT 13.0,(@2)");
+            Inst("PowerSupply2").Write("VOLT 1.8,(@3)");
+            Inst("PowerSupply1").Write("VOLT 1.5,(@2)");
+            Inst("PowerSupply1").Write("VOLT 3.3,(@3)");
+            Inst("PowerSupply2").Write("VOLT 5.0,(@1)");
+            Inst("PowerSupply0").Write("VOLT 1.35,(@3)");
 
-            SignalGenerator0.Write("SOURce1:FUNC SQU");
-            SignalGenerator0.Write("SOURce1:VOLTage 0.5");
-            SignalGenerator0.Write("SOURce1:VOLTage:OFFSet 0.25");
-            SignalGenerator0.Write("SOURce1:FREQ 10000");
+            Inst("SignalGenerator0").Write("SOURce1:FUNC SQU");
+            Inst("SignalGenerator0").Write("SOURce1:VOLTage 0.5");
+            Inst("SignalGenerator0").Write("SOURce1:VOLTage:OFFSet 0.25");
+            Inst("SignalGenerator0").Write("SOURce1:FREQ 10000");
             await Task.Delay(10, ct);
 
-            PowerSupply0.Write("OUTP ON,(@2)");
-            PowerSupply2.Write("OUTP ON,(@3)");
-            PowerSupply0.Write("OUTP ON,(@3)");
-            PowerSupply1.Write("OUTP ON,(@2)");
-            PowerSupply1.Write("OUTP ON,(@3)");
-            PowerSupply2.Write("OUTP ON,(@1)");
-            SignalGenerator0.Write("OUTP:STAT ON");
+            Inst("PowerSupply0").Write("OUTP ON,(@2)");
+            Inst("PowerSupply2").Write("OUTP ON,(@3)");
+            Inst("PowerSupply0").Write("OUTP ON,(@3)");
+            Inst("PowerSupply1").Write("OUTP ON,(@2)");
+            Inst("PowerSupply1").Write("OUTP ON,(@3)");
+            Inst("PowerSupply2").Write("OUTP ON,(@1)");
+            Inst("SignalGenerator0").Write("OUTP:STAT ON");
             await Task.Delay(1000, ct);
             gpio.SetGpioDirection(8, true);
             gpio.SetGpioDirection(9, false);
@@ -2576,13 +2568,13 @@
                 ct.ThrowIfCancellationRequested();
                 ADIM_Min = 65535;
                 ADIM_Max = 400;
-                PowerSupply0.Write($"VOLT {CS_Voltage},(@3)");
+                Inst("PowerSupply0").Write($"VOLT {CS_Voltage},(@3)");
                 await Task.Delay(100, ct);
                 for (int j = 0; j < 10; j++)
                 {
-                    OscilloScope0.Write(":SING");
+                    Inst("OscilloScope0").Write(":SING");
                     await Task.Delay(100, ct);
-                    GATE_ON = double.Parse(OscilloScope0.Query(":MEAS:PPUL? CHAN1"));
+                    GATE_ON = double.Parse(Inst("OscilloScope0").Query(":MEAS:PPUL? CHAN1"));
 
                     if (ADIM_Min > GATE_ON)
                         ADIM_Min = GATE_ON;
@@ -2601,8 +2593,8 @@
             }
             double V2DMAX = CS_Voltage;
 
-            PowerSupply0.Write("VOLT 0.0,(@3)");
-            PowerSupply1.Write("VOLT 0.0,(@3)");
+            Inst("PowerSupply0").Write("VOLT 0.0,(@3)");
+            Inst("PowerSupply1").Write("VOLT 0.0,(@3)");
             await Task.Delay(10, ct);
 
             gpio.SetGpioDirection(8, true);
@@ -2614,13 +2606,13 @@
                 ct.ThrowIfCancellationRequested();
                 ADIM_Min = 65535;
                 ADIM_Max = 400;
-                PowerSupply0.Write($"VOLT {CS_Voltage},(@3)");
+                Inst("PowerSupply0").Write($"VOLT {CS_Voltage},(@3)");
                 await Task.Delay(10, ct);
                 for (int j = 0; j < 10; j++)
                 {
-                    OscilloScope0.Write(":SING");
+                    Inst("OscilloScope0").Write(":SING");
                     await Task.Delay(100, ct);
-                    GATE_ON = double.Parse(OscilloScope0.Query(":MEAS:PPUL? CHAN1"));
+                    GATE_ON = double.Parse(Inst("OscilloScope0").Query(":MEAS:PPUL? CHAN1"));
 
                     if (ADIM_Min > GATE_ON)
                         ADIM_Min = GATE_ON;
@@ -2639,8 +2631,8 @@
             }
             double V2DMIN = CS_Voltage;
 
-            PowerSupply0.Write("VOLT 0.0,(@3)");
-            PowerSupply1.Write("VOLT 0.0,(@3)");
+            Inst("PowerSupply0").Write("VOLT 0.0,(@3)");
+            Inst("PowerSupply1").Write("VOLT 0.0,(@3)");
             await Task.Delay(10, ct);
 
             gpio.SetGpioValue(8, false);
@@ -2651,13 +2643,13 @@
                 ct.ThrowIfCancellationRequested();
                 ADIM_Min = 65535;
                 ADIM_Max = 400;
-                PowerSupply0.Write($"VOLT {CS_Voltage},(@3)");
+                Inst("PowerSupply0").Write($"VOLT {CS_Voltage},(@3)");
                 await Task.Delay(100, ct);
                 for (int j = 0; j < 10; j++)
                 {
-                    OscilloScope0.Write(":SING");
+                    Inst("OscilloScope0").Write(":SING");
                     await Task.Delay(100, ct);
-                    GATE_ON = double.Parse(OscilloScope0.Query(":MEAS:PPUL? CHAN1"));
+                    GATE_ON = double.Parse(Inst("OscilloScope0").Query(":MEAS:PPUL? CHAN1"));
 
                     if (ADIM_Min > GATE_ON)
                         ADIM_Min = GATE_ON;
@@ -2676,27 +2668,27 @@
             }
             double VADIMO = CS_Voltage;
 
-            OscilloScope0.Write(":TIM:SCAL 50E-6");
+            Inst("OscilloScope0").Write(":TIM:SCAL 50E-6");
             await Task.Delay(100, ct);
             double TRISE = 0;
             for (int i = 0; i < 10; i++)
             {
                 ct.ThrowIfCancellationRequested();
-                OscilloScope0.Write(":SING");
-                TRISE = double.Parse(OscilloScope0.Query(":MEAS:RIS? CHAN1")) * 1E+9;
+                Inst("OscilloScope0").Write(":SING");
+                TRISE = double.Parse(Inst("OscilloScope0").Query(":MEAS:RIS? CHAN1")) * 1E+9;
                 await Task.Delay(100, ct);
 
                 if (TRISE > 115)
                     break;
             }
 
-            OscilloScope0.Write(":TIM:SCAL 5E-6");
+            Inst("OscilloScope0").Write(":TIM:SCAL 5E-6");
             double TFALL = 0;
             for (int i = 0; i < 10; i++)
             {
                 ct.ThrowIfCancellationRequested();
-                OscilloScope0.Write(":SING");
-                TFALL = double.Parse(OscilloScope0.Query(":MEAS:FALL? CHAN1")) * 1E+9;
+                Inst("OscilloScope0").Write(":SING");
+                TFALL = double.Parse(Inst("OscilloScope0").Query(":MEAS:FALL? CHAN1")) * 1E+9;
                 await Task.Delay(100, ct);
                 if (TFALL > 25)
                     break;
@@ -2708,22 +2700,22 @@
             singleSheet.Write(56, y_pos, TRISE.ToString("F4"));
             singleSheet.Write(57, y_pos, TFALL.ToString("F4"));
 
-            PowerSupply0.Write("OUTP OFF,(@2)");
-            PowerSupply2.Write("OUTP OFF,(@3)");
-            PowerSupply0.Write("OUTP OFF,(@3)");
-            PowerSupply1.Write("OUTP OFF,(@2)");
-            PowerSupply1.Write("OUTP OFF,(@3)");
-            PowerSupply2.Write("OUTP OFF,(@1)");
-            SignalGenerator0.Write("OUTP:STAT OFF");
+            Inst("PowerSupply0").Write("OUTP OFF,(@2)");
+            Inst("PowerSupply2").Write("OUTP OFF,(@3)");
+            Inst("PowerSupply0").Write("OUTP OFF,(@3)");
+            Inst("PowerSupply1").Write("OUTP OFF,(@2)");
+            Inst("PowerSupply1").Write("OUTP OFF,(@3)");
+            Inst("PowerSupply2").Write("OUTP OFF,(@1)");
+            Inst("SignalGenerator0").Write("OUTP:STAT OFF");
             await Task.Delay(1, ct);
         }
 
         private async Task RunVadimoTest(RunTestContext ctx, CancellationToken ct, int? num = null)
         {
-            if (PowerSupply0 == null || PowerSupply1 == null || PowerSupply2 == null || OscilloScope0 == null || SignalGenerator0 == null)
-                throw new InvalidOperationException("All required instruments must be connected.");
             if (!(_bus is IGpioController gpio))
                 throw new InvalidOperationException("GPIO Control is not supported.");
+
+            CheckInstruments("PowerSupply0", "PowerSupply1", "PowerSupply2", "OscilloScope0", "SignalGenerator0");
 
             IReportSheet singleSheet;
             try
@@ -2734,44 +2726,44 @@
 
             int y_pos = num ?? 1;
 
-            PowerSupply0.Write("OUTP OFF,(@2)");
-            PowerSupply2.Write("OUTP OFF,(@3)");
-            PowerSupply0.Write("OUTP OFF,(@3)");
-            PowerSupply1.Write("OUTP OFF,(@2)");
-            PowerSupply1.Write("OUTP OFF,(@3)");
-            PowerSupply2.Write("OUTP OFF,(@1)");
-            SignalGenerator0.Write("OUTP:STAT OFF");
+            Inst("PowerSupply0").Write("OUTP OFF,(@2)");
+            Inst("PowerSupply2").Write("OUTP OFF,(@3)");
+            Inst("PowerSupply0").Write("OUTP OFF,(@3)");
+            Inst("PowerSupply1").Write("OUTP OFF,(@2)");
+            Inst("PowerSupply1").Write("OUTP OFF,(@3)");
+            Inst("PowerSupply2").Write("OUTP OFF,(@1)");
+            Inst("SignalGenerator0").Write("OUTP:STAT OFF");
             await Task.Delay(1, ct);
 
-            PowerSupply0.Write("VOLT 0.0,(@2)");
-            PowerSupply2.Write("VOLT 0.0,(@3)");
-            PowerSupply0.Write("VOLT 0.0,(@3)");
-            PowerSupply1.Write("VOLT 0.0,(@2)");
-            PowerSupply1.Write("VOLT 0.0,(@3)");
-            PowerSupply2.Write("VOLT 0.0,(@1)");
+            Inst("PowerSupply0").Write("VOLT 0.0,(@2)");
+            Inst("PowerSupply2").Write("VOLT 0.0,(@3)");
+            Inst("PowerSupply0").Write("VOLT 0.0,(@3)");
+            Inst("PowerSupply1").Write("VOLT 0.0,(@2)");
+            Inst("PowerSupply1").Write("VOLT 0.0,(@3)");
+            Inst("PowerSupply2").Write("VOLT 0.0,(@1)");
             await Task.Delay(10, ct);
 
-            PowerSupply0.Write("VOLT 13.0,(@2)");
-            PowerSupply2.Write("VOLT 1.8,(@3)");
-            PowerSupply1.Write("VOLT 1.5,(@2)");
-            PowerSupply1.Write("VOLT 5.0,(@3)");
-            PowerSupply2.Write("VOLT 5.0,(@1)");
-            PowerSupply0.Write("VOLT 1.35,(@3)");
-            PowerSupply1.Write("VOLT 0.0,(@3)");
+            Inst("PowerSupply0").Write("VOLT 13.0,(@2)");
+            Inst("PowerSupply2").Write("VOLT 1.8,(@3)");
+            Inst("PowerSupply1").Write("VOLT 1.5,(@2)");
+            Inst("PowerSupply1").Write("VOLT 5.0,(@3)");
+            Inst("PowerSupply2").Write("VOLT 5.0,(@1)");
+            Inst("PowerSupply0").Write("VOLT 1.35,(@3)");
+            Inst("PowerSupply1").Write("VOLT 0.0,(@3)");
 
-            SignalGenerator0.Write("SOURce1:FUNC SQU");
-            SignalGenerator0.Write("SOURce1:VOLTage 0.5");
-            SignalGenerator0.Write("SOURce1:VOLTage:OFFSet 0.25");
-            SignalGenerator0.Write("SOURce1:FREQ 10000");
+            Inst("SignalGenerator0").Write("SOURce1:FUNC SQU");
+            Inst("SignalGenerator0").Write("SOURce1:VOLTage 0.5");
+            Inst("SignalGenerator0").Write("SOURce1:VOLTage:OFFSet 0.25");
+            Inst("SignalGenerator0").Write("SOURce1:FREQ 10000");
             await Task.Delay(10, ct);
 
-            PowerSupply0.Write("OUTP ON,(@2)");
-            PowerSupply2.Write("OUTP ON,(@3)");
-            PowerSupply0.Write("OUTP ON,(@3)");
-            PowerSupply1.Write("OUTP ON,(@2)");
-            PowerSupply1.Write("OUTP ON,(@3)");
-            PowerSupply2.Write("OUTP ON,(@1)");
-            SignalGenerator0.Write("OUTP:STAT ON");
+            Inst("PowerSupply0").Write("OUTP ON,(@2)");
+            Inst("PowerSupply2").Write("OUTP ON,(@3)");
+            Inst("PowerSupply0").Write("OUTP ON,(@3)");
+            Inst("PowerSupply1").Write("OUTP ON,(@2)");
+            Inst("PowerSupply1").Write("OUTP ON,(@3)");
+            Inst("PowerSupply2").Write("OUTP ON,(@1)");
+            Inst("SignalGenerator0").Write("OUTP:STAT ON");
             await Task.Delay(1000, ct);
 
             gpio.SetGpioDirection(8, true);
@@ -2782,9 +2774,9 @@
             for (CS_Voltage = 1.372; CS_Voltage >= 1.28; CS_Voltage -= 0.002)
             {
                 ct.ThrowIfCancellationRequested();
-                PowerSupply0.Write($"VOLT {CS_Voltage},(@3)");
+                Inst("PowerSupply0").Write($"VOLT {CS_Voltage},(@3)");
                 await Task.Delay(50, ct);
-                GATE_ON = double.Parse(OscilloScope0.Query(":MEAS:PPUL? CHAN1"));
+                GATE_ON = double.Parse(Inst("OscilloScope0").Query(":MEAS:PPUL? CHAN1"));
 
                 if (GATE_ON >= 24 && GATE_ON <= 25)
                     break;
@@ -2793,13 +2785,13 @@
 
             singleSheet.Write(53, y_pos, VADIMO.ToString("F4"));
 
-            PowerSupply0.Write("OUTP OFF,(@2)");
-            PowerSupply2.Write("OUTP OFF,(@3)");
-            PowerSupply0.Write("OUTP OFF,(@3)");
-            PowerSupply1.Write("OUTP OFF,(@2)");
-            PowerSupply1.Write("OUTP OFF,(@3)");
-            PowerSupply2.Write("OUTP OFF,(@1)");
-            SignalGenerator0.Write("OUTP:STAT OFF");
+            Inst("PowerSupply0").Write("OUTP OFF,(@2)");
+            Inst("PowerSupply2").Write("OUTP OFF,(@3)");
+            Inst("PowerSupply0").Write("OUTP OFF,(@3)");
+            Inst("PowerSupply1").Write("OUTP OFF,(@2)");
+            Inst("PowerSupply1").Write("OUTP OFF,(@3)");
+            Inst("PowerSupply2").Write("OUTP OFF,(@1)");
+            Inst("SignalGenerator0").Write("OUTP:STAT OFF");
             await Task.Delay(1, ct);
         }
 
