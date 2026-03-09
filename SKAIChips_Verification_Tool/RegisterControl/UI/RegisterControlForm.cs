@@ -535,7 +535,14 @@ namespace SKAIChips_Verification_Tool.RegisterControl
 
             if (_selectedProject != null)
             {
-                lblSelectedProject.Text = _selectedProject.Name;
+                if (_selectedProject is Chicago)
+                {
+                    lblSelectedProject.Text = "Chicago (Custom SPI)";
+                }
+                else
+                {
+                    lblSelectedProject.Text = _selectedProject.Name;
+                }
 
                 UpdateTestSlotButtons(_selectedProject);
             }

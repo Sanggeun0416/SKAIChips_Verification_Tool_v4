@@ -297,10 +297,14 @@ namespace SKAIChips_Verification_Tool.RegisterControl
             const int sramTotalBytes = 320;
             const int sramSegmentsPerGrid = 32;
 
-            uint startAddress = uint.Parse(RegisterControlForm.Prompt.ShowDialog("Enter the Start Address in Decimal.", "Write SRAM"));
-            if (startAddress is < 0x000 or > 0x3FF)
+            string inputStr = RegisterControlForm.Prompt.ShowDialog("Enter the Start Address in Decimal.", "Write SRAM");
+
+            if (string.IsNullOrWhiteSpace(inputStr))
+                return;
+
+            if (!uint.TryParse(inputStr, out uint startAddress) || startAddress > 0x3FF)
             {
-                MessageBox.Show($"Address must be in 0x000 ~ 0x3FF.", "Write SRAM", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                MessageBox.Show("Address must be in 0x000 ~ 0x3FF.", "Write SRAM", MessageBoxButtons.OK, MessageBoxIcon.Error);
                 return;
             }
 
@@ -321,10 +325,14 @@ namespace SKAIChips_Verification_Tool.RegisterControl
             const int sramTotalBytes = 320;
             const int sramSegmentsPerGrid = 32;
 
-            uint startAddress = uint.Parse(RegisterControlForm.Prompt.ShowDialog("Enter the Start Address in Decimal.", "Read SRAM"));
-            if (startAddress is < 0x000 or > 0x400)
+            string inputStr = RegisterControlForm.Prompt.ShowDialog("Enter the Start Address in Decimal.", "Read SRAM");
+
+            if (string.IsNullOrWhiteSpace(inputStr))
+                return;
+
+            if (!uint.TryParse(inputStr, out uint startAddress) || startAddress > 0x400)
             {
-                MessageBox.Show($"Address must be in 0x000 ~ 0x400.", "Read SRAM", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                MessageBox.Show("Address must be in 0x000 ~ 0x400.", "Read SRAM", MessageBoxButtons.OK, MessageBoxIcon.Error);
                 return;
             }
 
