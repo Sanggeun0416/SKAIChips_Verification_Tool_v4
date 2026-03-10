@@ -92,5 +92,203 @@
                 throw new InvalidOperationException("Bus (SPI or I2C) is not connected.");
             }
         }
+
+        [ChipTest("AUTO", "BGR SWEEP", "Auto Sweep BGR Trim Bits.")]
+        private async Task AutoSweepBgr(CancellationToken ct, RunTestContext ctx)
+        {
+            ct.ThrowIfCancellationRequested();
+
+            if (_regCont == null)
+                throw new InvalidOperationException("RegisterControlForm is null.");
+
+            DialogResult dr = ShowMsg(
+                "TC Trim까지 모두 Sweep 하시겠습니까?\n\n'예'를 누르면 bgr_tc_trim<3:0>, bgr_trim<5:0> 전체 Sweep을 진행하며," +
+                "\n'아니요'를 누르면 현재 설정된 bgr_tc_trim<3:0> 값에서 bgr_trim<5:0>만 Sweep 합니다.",
+                "Sweep 범위 설정",
+                MessageBoxButtons.YesNoCancel,
+                MessageBoxIcon.Question
+            );
+
+            if (dr == DialogResult.Cancel)
+            {
+                AppendLog("STOP", "테스트가 사용자에 의해 취소되었습니다.");
+                return;
+            }
+
+            bool sweepTcAll = (dr == DialogResult.Yes);
+
+            CheckInstruments("DigitalMultimeter0");
+
+            IReportSheet bgrSheet;
+            string time = DateTime.Now.ToString("HHmmss");
+            bgrSheet = ctx.Report.CreateSheet($"{time}_BGR_SWEEP");
+            bgrSheet.SetSheetFont("Consolas", 11);
+
+            bgrSheet.Write(1, 1, $"bgr_tc_trim<3:0>");
+            bgrSheet.Write(1, 2, $"bgr_trim<5:0>");
+            bgrSheet.Write(1, 3, $"bgr_out[mV]");
+            bgrSheet.SetAlignmentCenter(1, 1, 1, 3);
+            bgrSheet.AutoFit();
+
+            uint startTc = 0;
+            uint endTc = 16;
+
+            if (!sweepTcAll)
+            {
+                startTc = 0;
+                endTc = startTc + 1;
+            }
+
+            int rowOffset = 2;
+
+            WriteRegister(0x02, 0x30);
+
+            for (uint tc = startTc; tc < endTc; tc++)
+            {
+                uint tc_3_2 = (tc >> 2) & 0x03;
+                uint tc_1_0 = tc & 0x03;
+
+                for (uint trim = 0; trim < 64; trim++)
+                {
+                    ct.ThrowIfCancellationRequested();
+
+                    WriteRegister(0x04, tc_3_2);
+                    WriteRegister(0x05, 0x00 | (tc_1_0 << 6) | trim);
+                    await Task.Delay(100, ct);
+
+                    double voltage = double.Parse(Inst("DigitalMultimeter0").Query(":MEAS:VOLT:DC?")) * 1000;
+
+                    bgrSheet.Write(rowOffset, 1, $"{tc}");
+                    bgrSheet.Write(rowOffset, 2, $"{trim}");
+                    bgrSheet.Write(rowOffset, 3, $"{Math.Round(voltage, 5)}");
+
+                    rowOffset++;
+                }
+            }
+        }
+
+        [ChipTest("AUTO", "VREF ALDO SWEEP", "Auto Sweep VREF ALDO Trim Bits.")]
+        private async Task AutoSweepVrefAldo(CancellationToken ct, RunTestContext ctx)
+        {
+            ct.ThrowIfCancellationRequested();
+
+            if (_regCont == null)
+                throw new InvalidOperationException("RegisterControlForm is null.");
+
+            CheckInstruments("DigitalMultimeter0");
+
+            string time = DateTime.Now.ToString("HHmmss");
+            IReportSheet aldoSheet = ctx.Report.CreateSheet($"{time}_ALDO_REFGEN");
+            aldoSheet.SetSheetFont("Consolas", 11);
+
+            var VREF_ALDO_TRIM = _regCont.RegMgr.GetRegisterItem(this, "vref_aldo_trim<3:0>");
+
+            aldoSheet.Write(1, 1, $"vref_aldo_trim<3:0>");
+            aldoSheet.Write(1, 2, $"aldo_out[mV]");
+            aldoSheet.SetAlignmentCenter(1, 1, 1, 2);
+            aldoSheet.AutoFit();
+
+            for (uint trim = 0; trim < 16; trim++)
+            {
+                ct.ThrowIfCancellationRequested();
+
+                VREF_ALDO_TRIM.Write(trim);
+                await Task.Delay(100, ct);
+
+                double voltage = double.Parse(Inst("DigitalMultimeter0").Query(":MEAS:VOLT:DC?")) * 1000;
+
+                int rowOffset = 2 + (int)trim;
+                aldoSheet.Write(rowOffset, 1, $"{trim}");
+                aldoSheet.Write(rowOffset, 2, $"{Math.Round(voltage, 5)}");
+            }
+        }
+
+        [ChipTest("AUTO", "VREF DLDO SWEEP", "Auto Sweep VREF DLDO Trim Bits.")]
+        private async Task AutoSweepVrefDldo(CancellationToken ct, RunTestContext ctx)
+        {
+            ct.ThrowIfCancellationRequested();
+
+            if (_regCont == null)
+                throw new InvalidOperationException("RegisterControlForm is null.");
+
+            CheckInstruments("DigitalMultimeter0");
+
+            string time = DateTime.Now.ToString("HHmmss");
+            IReportSheet dldoSheet = ctx.Report.CreateSheet($"{time}_DLDO_REFGEN");
+            dldoSheet.SetSheetFont("Consolas", 11);
+
+            var vref_dldo_trim_3 = _regCont.RegMgr.GetRegisterItem(this, "vref_dldo_trim<3>");
+            var vref_dldo_trim_2_0 = _regCont.RegMgr.GetRegisterItem(this, "vref_dldo_trim<2:0>");
+
+            dldoSheet.Write(1, 1, $"vref_dldo_trim<3:0>");
+            dldoSheet.Write(1, 2, $"dldo_out[mV]");
+            dldoSheet.SetAlignmentCenter(1, 1, 1, 2);
+            dldoSheet.AutoFit();
+
+            for (uint trim = 0; trim < 16; trim++)
+            {
+                ct.ThrowIfCancellationRequested();
+
+                uint fine_3 = (trim >> 3) & 0x01;
+                uint fine_2_0 = trim & 0x07;
+
+                vref_dldo_trim_3.Write(fine_3);
+                vref_dldo_trim_2_0.Write(fine_2_0);
+                await Task.Delay(100, ct);
+
+                double voltage = double.Parse(Inst("DigitalMultimeter0").Query(":MEAS:VOLT:DC?")) * 1000;
+
+                int rowOffset = 2 + (int)trim;
+                dldoSheet.Write(rowOffset, 1, $"{trim}");
+                dldoSheet.Write(rowOffset, 2, $"{Math.Round(voltage, 5)}");
+            }
+        }
+
+        [ChipTest("AUTO", "ALDO SWEEP", "Auto Sweep ALDO Trim Bits.")]
+        private async Task AutoSweepAldo(CancellationToken ct, RunTestContext ctx)
+        {
+            ct.ThrowIfCancellationRequested();
+
+            if (_regCont == null)
+                throw new InvalidOperationException("RegisterControlForm is null.");
+
+            CheckInstruments("DigitalMultimeter0");
+
+            IReportSheet bgrSheet;
+            string time = DateTime.Now.ToString("HHmmss");
+            bgrSheet = ctx.Report.CreateSheet($"{time}_ALDO_SWEEP");
+            bgrSheet.SetSheetFont("Consolas", 11);
+
+            bgrSheet.Write(1, 1, $"aldo_lv_trim<1:0>");
+            bgrSheet.Write(1, 2, $"aldo_trim<3:0>");
+            bgrSheet.Write(1, 3, $"aldo_out[mV]");
+            bgrSheet.SetAlignmentCenter(1, 1, 1, 3);
+            bgrSheet.AutoFit();
+
+            int rowOffset = 2;
+
+            for (uint coarse = 0; coarse < 4; coarse++)
+            {
+                for (uint fine = 0; fine < 16; fine++)
+                {
+                    ct.ThrowIfCancellationRequested();
+
+                    uint fine_3_2 = (fine >> 2) & 0x03;
+                    uint fine_1_0 = fine & 0x03;
+
+                    WriteRegister(0x0A, fine_3_2);
+                    WriteRegister(0x0B, 0x00 | (fine_1_0 << 6) | (coarse << 4));
+                    await Task.Delay(100, ct);
+
+                    double voltage = double.Parse(Inst("DigitalMultimeter0").Query(":MEAS:VOLT:DC?")) * 1000;
+
+                    bgrSheet.Write(rowOffset, 1, $"{coarse}");
+                    bgrSheet.Write(rowOffset, 2, $"{fine}");
+                    bgrSheet.Write(rowOffset, 3, $"{Math.Round(voltage, 5)}");
+
+                    rowOffset++;
+                }
+            }
+        }
     }
 }

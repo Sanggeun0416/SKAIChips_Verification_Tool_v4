@@ -638,7 +638,7 @@
 
             string time = DateTime.Now.ToString("HHmmss");
             vcoSheet = ctx.Report.CreateSheet($"{time}_VCO");
-            vcoSheet.SetSheetFont("Consolas", 10);
+            vcoSheet.SetSheetFont("Consolas", 11);
 
             vcoSheet.Write(1, 1, $"w_EXT_CAPS[9:0]");
             vcoSheet.Write(2, 1, $"Freq[MHz]");
@@ -735,7 +735,7 @@
 
             string time = DateTime.Now.ToString("HHmmss");
             txSheet = ctx.Report.CreateSheet($"{time}_TX");
-            txSheet.SetSheetFont("Consolas", 10);
+            txSheet.SetSheetFont("Consolas", 11);
 
             txSheet.Write(1, 1, $"TX_Max_Power");
             txSheet.Write(2, 1, $"Freq [MHz]");
@@ -1006,7 +1006,7 @@
 
             string time = DateTime.Now.ToString("HHmmss");
             rxSheet = ctx.Report.CreateSheet($"{time}_RxGain");
-            rxSheet.SetSheetFont("Consolas", 10);
+            rxSheet.SetSheetFont("Consolas", 11);
 
             rxSheet.Write(1, 1, $"TX_Max_Power");
             rxSheet.Write(2, 1, $"Freq [MHz]");

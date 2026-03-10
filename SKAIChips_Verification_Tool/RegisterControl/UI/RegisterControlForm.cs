@@ -597,20 +597,20 @@ namespace SKAIChips_Verification_Tool.RegisterControl
 
             foreach (var p in _projects)
             {
-                foreach (var keyword in p.ProjectKeywords)
+                if (p.ProjectKeywords.Any(k => string.Equals(k, fileName, StringComparison.OrdinalIgnoreCase)))
                 {
-                    if (string.IsNullOrWhiteSpace(keyword))
-                        continue;
+                    selected = p;
+                    break;
+                }
+            }
 
-                    if (string.Equals(keyword, fileName, StringComparison.OrdinalIgnoreCase))
-                    {
-                        selected = p;
-                        break;
-                    }
-
+            if (selected == null)
+            {
+                foreach (var p in _projects)
+                {
                     foreach (var token in tokens)
                     {
-                        if (string.Equals(keyword, token, StringComparison.OrdinalIgnoreCase))
+                        if (p.ProjectKeywords.Any(k => string.Equals(k, token, StringComparison.OrdinalIgnoreCase)))
                         {
                             selected = p;
                             break;
@@ -618,16 +618,24 @@ namespace SKAIChips_Verification_Tool.RegisterControl
                     }
                     if (selected != null)
                         break;
+                }
+            }
 
-                    if (fileName.IndexOf(keyword, StringComparison.OrdinalIgnoreCase) >= 0)
+            if (selected == null)
+            {
+                var sortedProjects = _projects
+                    .SelectMany(p => p.ProjectKeywords.Select(k => new { Project = p, Keyword = k }))
+                    .Where(x => !string.IsNullOrWhiteSpace(x.Keyword))
+                    .OrderByDescending(x => x.Keyword.Length);
+
+                foreach (var item in sortedProjects)
+                {
+                    if (fileName.IndexOf(item.Keyword, StringComparison.OrdinalIgnoreCase) >= 0)
                     {
-                        selected = p;
+                        selected = item.Project;
                         break;
                     }
                 }
-
-                if (selected != null)
-                    break;
             }
 
             if (selected != null)
