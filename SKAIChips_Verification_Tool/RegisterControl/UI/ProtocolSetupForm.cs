@@ -143,6 +143,11 @@ namespace SKAIChips_Verification_Tool.RegisterControl
                     return;
                 }
 
+                if (slave > 0x7F)
+                {
+                    MessageBox.Show("I2C Slave Address는 7비트 값(0x00 ~ 0x7F)이어야 합니다.");
+                    return;
+                }
                 settings.I2cSlaveAddress = slave;
             }
             else if (protocol == ProtocolRegLogType.SPI)

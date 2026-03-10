@@ -94,11 +94,11 @@
             if (_settings.DeviceKind == DeviceKind.FT4222)
             {
                 var buf = data.ToArray();
-                _ft4222!.I2cWrite(slaveAddr, buf);
+                _ft4222!.I2cWrite(targetAddr, buf);
                 return;
             }
 
-            _um232h!.I2cWrite(slaveAddr, data.ToArray(), stop);
+            _um232h!.I2cWrite(targetAddr, data.ToArray(), stop);
         }
 
         public void Read(byte slaveAddr, Span<byte> buffer, int timeoutMs)
@@ -110,12 +110,12 @@
             if (_settings.DeviceKind == DeviceKind.FT4222)
             {
                 var tmp = new byte[buffer.Length];
-                _ft4222!.I2cRead(slaveAddr, tmp);
+                _ft4222!.I2cRead(targetAddr, tmp);
                 tmp.AsSpan().CopyTo(buffer);
                 return;
             }
 
-            var r = _um232h!.I2cRead(slaveAddr, buffer.Length);
+            var r = _um232h!.I2cRead(targetAddr, buffer.Length);
             r.AsSpan(0, Math.Min(r.Length, buffer.Length)).CopyTo(buffer);
         }
 
@@ -128,12 +128,12 @@
             if (_settings.DeviceKind == DeviceKind.FT4222)
             {
 
-                Write(slaveAddr, w, stop: true);
-                Read(slaveAddr, r, timeoutMs);
+                Write(targetAddr, w, stop: true);
+                Read(targetAddr, r, timeoutMs);
                 return;
             }
 
-            var rr = _um232h!.I2cWriteAndRead(slaveAddr, w.ToArray(), w.Length, r.Length);
+            var rr = _um232h!.I2cWriteAndRead(targetAddr, w.ToArray(), w.Length, r.Length);
             rr.AsSpan(0, Math.Min(rr.Length, r.Length)).CopyTo(r);
         }
 
