@@ -151,6 +151,20 @@ namespace SKAIChips_Verification_Tool.RegisterControl
             Excel.Worksheet ws = null;
             try
             {
+                if (_wb.Worksheets.Count == 1)
+                {
+                    ws = (Excel.Worksheet)_wb.Worksheets[1];
+                    if (ws.Name.StartsWith("Sheet", StringComparison.OrdinalIgnoreCase) ||
+                        ws.Name.StartsWith("시트", StringComparison.OrdinalIgnoreCase))
+                    {
+                        ws.Name = unique;
+                        ws.Activate();
+                        return ws.Name;
+                    }
+
+                    ReleaseCom(ws);
+                    ws = null;
+                }
                 ws = (Excel.Worksheet)_wb.Worksheets.Add(After: _wb.Worksheets[_wb.Worksheets.Count]);
                 ws.Name = unique;
                 ws.Activate();

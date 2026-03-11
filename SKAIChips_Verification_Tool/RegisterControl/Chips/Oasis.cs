@@ -275,15 +275,16 @@
             if (_regCont == null)
                 throw new InvalidOperationException("RegisterControlForm is null.");
 
-            CheckInstruments("DigitalMultimeter0");
+            CheckInstruments("DigitalMultimeter0", "PowerSupply0");
             var ABGR_CONT = _regCont.RegMgr.GetRegisterItem(this, "O_ABGR_CONT[3:0]");
-            uint[] bgrCont = { 8, 9, 10, 11, 12, 13, 14, 15, 0, 1, 2, 3, 4, 5, 6, 7 };
 
             IReportSheet sortSheet;
             int x_pos = 2;
 
             int passCount = 0;
             int failCount = 0;
+
+            Inst("PowerSupply0").Write("OUTP OFF, (@1:3)");
 
             try
             {
@@ -309,10 +310,10 @@
                 sortSheet.SetSheetFont("Consolas", 10);
                 sortSheet.Write(1, 2, "Chip No.");
                 sortSheet.Write(2, 1, "O_ABGR_CONT[3:0]");
-                for (int i = 0; i < bgrCont.Length; i++)
-                    sortSheet.Write(3 + i, 1, bgrCont[i]);
+                for (int i = 0; i < 16; i++)
+                    sortSheet.Write(3 + i, 1, i);
                 sortSheet.Write(19, 1, "PASS/FAIL");
-                sortSheet.SetAlignmentCenter(1, 1, 1, 3);
+                sortSheet.SetAlignmentCenterAll();
                 sortSheet.AutoFit();
             }
 
@@ -371,7 +372,15 @@
                 }
 
                 sortSheet.Write(2, x_pos, x_pos - 1);
+                sortSheet.Focus(2, x_pos);
                 bool isPass = false;
+
+                Inst("PowerSupply0").Write("VOLT 3.3, (@1)");
+                Inst("PowerSupply0").Write("VOLT 0.95, (@2)");
+                Inst("PowerSupply0").Write("VOLT 0.9, (@3)");
+                Inst("PowerSupply0").Write("CURR 0.05, (@1:3)");
+                Inst("PowerSupply0").Write("OUTP ON, (@1:3)");
+                await Task.Delay(1000);
 
                 bool flashSuccess = true;
                 await FirmwareFlashWrite((level, msgText) =>
@@ -403,11 +412,11 @@
                     await ManualGpio4Abgr();
                     await Task.Delay(1000);
 
-                    for (int lv = 0; lv < bgrCont.Length; lv++)
+                    for (int lv = 0; lv < 16; lv++)
                     {
                         ct.ThrowIfCancellationRequested();
 
-                        ABGR_CONT.Value = bgrCont[lv];
+                        ABGR_CONT.Value = (uint)lv;
                         ABGR_CONT.Write();
                         await Task.Delay(100);
 
@@ -424,6 +433,8 @@
                 }
 
                 sortSheet.Write(19, x_pos, isPass ? "PASS" : "FAIL");
+                sortSheet.AutoFit();
+                rtx.Report.Save();
 
                 if (isPass)
                     passCount++;
@@ -431,6 +442,7 @@
                     failCount++;
 
                 x_pos++;
+                Inst("PowerSupply0").Write("OUTP OFF, (@1:3)");
             }
         }
 

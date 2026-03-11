@@ -9,7 +9,7 @@ namespace SKAIChips_Verification_Tool
         private InstrumentForm _instrumentForm;
 
         public static string AppName { get; } = "SKAIChips_Verification";
-        public static string Version { get; } = "v4.0.0 [Confidential]";
+        public static string Version { get; } = "v4.0.1 [Confidential]";
 
         public MainForm()
         {
