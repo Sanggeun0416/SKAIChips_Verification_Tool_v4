@@ -8,9 +8,8 @@
   <UseWindowsForms>true</UseWindowsForms>
   <ImplicitUsings>enable</ImplicitUsings>
   <PlatformTarget>x64</PlatformTarget>
-  <AssemblyName>SKAIChips_Verification_Tool</AssemblyName>
-  <ApplicationIcon>cat_icon_128.ico</ApplicationIcon>
-
+  <Version>4.0.1</Version>
+  <AssemblyName>SKAIChips_Verification_Tool_v$(Version)</AssemblyName>  <ApplicationIcon>cat_icon_128.ico</ApplicationIcon>
   <PublishSingleFile>true</PublishSingleFile>
   <SelfContained>false</SelfContained>
   <RuntimeIdentifier>win-x64</RuntimeIdentifier>
