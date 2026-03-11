@@ -23,33 +23,10 @@
 
         public override TestSlotAction[] GetTestSlotActions()
         {
-            return null;/*new[]
-            {
-                new TestSlotAction("Oasis Init", () => MessageBox.Show("Running Oasis Initialization..."))
-            };*/
-        }
-
-        public bool PrepareTest(string testId, ITestUiContext uiContext)
-        {
-            if (testId == "FW.FLASH_WRITE")
-            {
-                string? filePath = uiContext.OpenFileDialog("FW File (*.bin;*.hex)|*.bin;*.hex|All files (*.*)|*.*", "Select Firmware File");
-                if (string.IsNullOrEmpty(filePath))
-                    return false;
-
-                SetFirmwareFilePath(filePath);
-            }
-            else if (testId == "FW.FLASH_VERIFY" || testId == "FW.FLASH_READ")
-            {
-                string? sizeStr = uiContext.PromptInput("FLASH FUNCTION", "Enter the Flash Size[Byte]:", "524288");
-
-                if (string.IsNullOrEmpty(sizeStr) || !uint.TryParse(sizeStr, out uint flashSize) || flashSize == 0)
-                    return false;
-
-                SetFlashSize(flashSize);
-            }
-
-            return true;
+            return
+            [
+                new TestSlotAction("TEST", () => MessageBox.Show("TEST Slot."))
+            ];
         }
 
         private const uint RegI2cId = 0x5000_0000;
@@ -290,6 +267,173 @@
         #endregion MANUAL TEST ITEMS
 
         #region AUTO TEST ITEMS
+        [ChipTest("AUTO", "Sorting Process", "Start Sorting Process.")]
+        private async Task StartAbgrSortingProcess(CancellationToken ct, RunTestContext rtx)
+        {
+            ct.ThrowIfCancellationRequested();
+
+            if (_regCont == null)
+                throw new InvalidOperationException("RegisterControlForm is null.");
+
+            CheckInstruments("DigitalMultimeter0");
+            var ABGR_CONT = _regCont.RegMgr.GetRegisterItem(this, "O_ABGR_CONT[3:0]");
+            uint[] bgrCont = { 8, 9, 10, 11, 12, 13, 14, 15, 0, 1, 2, 3, 4, 5, 6, 7 };
+
+            IReportSheet sortSheet;
+            int x_pos = 2;
+
+            int passCount = 0;
+            int failCount = 0;
+
+            try
+            {
+                sortSheet = rtx.Report.SelectSheet("SortData");
+                while (true)
+                {
+                    var val = sortSheet.Read(2, x_pos);
+                    if (val == null || string.IsNullOrWhiteSpace(val.ToString()))
+                        break;
+
+                    var pfStr = sortSheet.Read(19, x_pos)?.ToString();
+                    if (pfStr == "PASS")
+                        passCount++;
+                    else if (pfStr == "FAIL")
+                        failCount++;
+
+                    x_pos++;
+                }
+            }
+            catch
+            {
+                sortSheet = rtx.Report.CreateSheet("SortData");
+                sortSheet.SetSheetFont("Consolas", 10);
+                sortSheet.Write(1, 2, "Chip No.");
+                sortSheet.Write(2, 1, "O_ABGR_CONT[3:0]");
+                for (int i = 0; i < bgrCont.Length; i++)
+                    sortSheet.Write(3 + i, 1, bgrCont[i]);
+                sortSheet.Write(19, 1, "PASS/FAIL");
+                sortSheet.SetAlignmentCenter(1, 1, 1, 3);
+                sortSheet.AutoFit();
+            }
+
+            if (string.IsNullOrEmpty(_firmwareFilePath))
+            {
+                _regCont.Invoke((MethodInvoker)delegate
+                {
+                    using (var ofd = new OpenFileDialog())
+                    {
+                        ofd.Title = "Select Firmware File for Sorting";
+                        ofd.Filter = "FW File (*.bin;*.hex)|*.bin;*.hex|All files (*.*)|*.*";
+
+                        if (ofd.ShowDialog() == DialogResult.OK)
+                        {
+                            SetFirmwareFilePath(ofd.FileName);
+                        }
+                    }
+                });
+
+                if (string.IsNullOrEmpty(_firmwareFilePath))
+                {
+                    AppendLog("ERROR", "Firmware file is not selected. Test aborted.");
+                    return;
+                }
+            }
+
+            while (true)
+            {
+                int totalChips = passCount + failCount;
+                double yieldPct = totalChips == 0 ? 0.0 : ((double)passCount / totalChips) * 100.0;
+
+                string msg = $"[ Next Chip No : {x_pos - 1} ]\n\n" +
+                             $"--- Current Statistics ---\n" +
+                             $"Tested : {totalChips} ea\n" +
+                             $"PASS   : {passCount} ea\n" +
+                             $"FAIL   : {failCount} ea\n" +
+                             $"Yield  : {yieldPct:F2} %\n\n" +
+                             "새로운 Chip으로 교체한 후 '확인(OK)'을 눌러 테스트를 진행하세요.\n" +
+                             "종료하려면 '취소(Cancel)'를 누르세요.";
+
+                DialogResult dr = DialogResult.None;
+
+                _regCont.Invoke((MethodInvoker)delegate
+                {
+                    dr = MessageBox.Show(
+                        msg,
+                        "Change Chip",
+                        MessageBoxButtons.OKCancel,
+                        MessageBoxIcon.Information);
+                });
+
+                if (dr == DialogResult.Cancel)
+                {
+                    AppendLog("INFO", "Sorting process stopped by user.");
+                    break;
+                }
+
+                sortSheet.Write(2, x_pos, x_pos - 1);
+                bool isPass = false;
+
+                bool flashSuccess = true;
+                await FirmwareFlashWrite((level, msgText) =>
+                {
+                    AppendLog(level, msgText);
+                    if (level == "ERROR")
+                    {
+                        flashSuccess = false;
+                    }
+                    return Task.CompletedTask;
+                }, ct);
+
+                if (flashSuccess)
+                {
+                    isPass = true;
+                }
+                else
+                {
+                    AppendLog("ERROR", "Firmware Download Failed. Skip ABGR Test.");
+                    isPass = false;
+                }
+
+                if (isPass)
+                {
+                    isPass = false;
+                    ABGR_CONT.Read();
+                    Inst("DigitalMultimeter0").Write(":CONF:VOLT:DC 1");
+
+                    await ManualGpio4Abgr();
+                    await Task.Delay(1000);
+
+                    for (int lv = 0; lv < bgrCont.Length; lv++)
+                    {
+                        ct.ThrowIfCancellationRequested();
+
+                        ABGR_CONT.Value = bgrCont[lv];
+                        ABGR_CONT.Write();
+                        await Task.Delay(100);
+
+                        string dmmResponse = Inst("DigitalMultimeter0").Query("READ?");
+                        double dmmVoltage = double.TryParse(dmmResponse, out double v) ? Math.Round((v * 1000), 5) : -1;
+                        if (dmmVoltage == -1)
+                            throw new FormatException("DigitalMultimeter0의 응답을 받지 못했습니다. 연결 상태를 확인하세요.");
+
+                        if (dmmVoltage >= 304)
+                            isPass = true;
+
+                        sortSheet.Write(3 + lv, x_pos, dmmVoltage);
+                    }
+                }
+
+                sortSheet.Write(19, x_pos, isPass ? "PASS" : "FAIL");
+
+                if (isPass)
+                    passCount++;
+                else
+                    failCount++;
+
+                x_pos++;
+            }
+        }
+
         private async Task TogglePllPen()
         {
             var regDC340030 = ReadRegister(0xDC34_0030);     // w_PLL_PEN
