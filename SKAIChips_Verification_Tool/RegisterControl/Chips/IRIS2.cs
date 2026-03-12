@@ -1,4 +1,6 @@
-﻿namespace SKAIChips_Verification_Tool.RegisterControl
+﻿using Microsoft.VisualBasic.Logging;
+
+namespace SKAIChips_Verification_Tool.RegisterControl
 {
     public class IRIS2 : ProjectBase
     {
@@ -288,6 +290,108 @@
 
                     rowOffset++;
                 }
+            }
+        }
+
+        [ChipTest("AUTO", "Chamber Test", "Start Chamber Test.")]
+        private async Task AutoChamberTest(CancellationToken ct, RunTestContext ctx)
+        {
+            ct.ThrowIfCancellationRequested();
+
+            if (_regCont == null)
+                throw new InvalidOperationException("RegisterControlForm is null.");
+
+            CheckInstruments("TempChamber0", "PowerSupply0", "DigitalMultimeter0");
+
+            string time = DateTime.Now.ToString("HHmmss");
+            IReportSheet dldoSheet = ctx.Report.CreateSheet($"{time}_ChamberTest");
+            dldoSheet.SetSheetFont("Consolas", 11);
+
+            //var vref_dldo_trim_3 = _regCont.RegMgr.GetRegisterItem(this, "vref_dldo_trim<3>");
+            //var vref_dldo_trim_2_0 = _regCont.RegMgr.GetRegisterItem(this, "vref_dldo_trim<2:0>");
+
+            //dldoSheet.Write(1, 1, $"vref_dldo_trim<3:0>");
+            //dldoSheet.Write(1, 2, $"dldo_out[mV]");
+            //dldoSheet.SetAlignmentCenter(1, 1, 1, 2);
+            //dldoSheet.AutoFit();
+
+            double[] tempsToTest = [85, 25, -40];
+            for (int cycle = 0; cycle < tempsToTest.Length; cycle++)
+            {
+                ct.ThrowIfCancellationRequested();
+
+                await SetlingChamber(tempsToTest[cycle], ct);
+
+                double voltage = double.Parse(Inst("DigitalMultimeter0").Query(":MEAS:VOLT:DC?")) * 1000;
+            }
+        }
+
+        private async Task SetlingChamber(double targetTemp, CancellationToken ct, double margin = 0.1, int stableTimeSecond = 60)
+        {
+            ct.ThrowIfCancellationRequested();
+
+            int stableInterval = 1000;
+
+            CheckInstruments("TempChamber0");
+
+            AppendLog("INFO", $"Setting chamber to {targetTemp} °C. Waiting for stabilization...");
+            Inst("TempChamber0").Write($"01,TEMP,S{targetTemp}");
+            await Task.Delay(1000, ct);
+
+            while (true)
+            {
+                ct.ThrowIfCancellationRequested();
+
+                string response = Inst("TempChamber0").Query(":TEMP?");
+                string[] arrBuf = response.Split(new char[] { ',' });
+
+                if (arrBuf.Length < 4)
+                {
+                    AppendLog($"ERROR", $"Unexpected response from TempChamber: {response}");
+                    continue;
+                }
+
+                double[] dVal = new double[5];
+                for (int split = 0; split < 4; split++)
+                    dVal[split] = double.Parse(arrBuf[split]);
+
+                AppendLog("INFO", $"RealTemp : {dVal[0].ToString()} | TargetTemp : {dVal[1].ToString()}");
+
+                if (Math.Round(Math.Abs(dVal[0] - targetTemp), 1) <= margin)
+                {
+                    AppendLog("INFO", "Temperature reached. Soaking for 60 seconds to confirm stability...");
+                    await Task.Delay(60000, ct);
+
+                    response = Inst("TempChamber0").Query(":TEMP?");
+                    arrBuf = response.Split(new char[] { ',' });
+
+                    if (arrBuf.Length < 4)
+                    {
+                        AppendLog($"ERROR", $"Unexpected response from TempChamber: {response}");
+                        continue;
+                    }
+
+                    dVal = new double[5];
+                    for (int split = 0; split < 4; split++)
+                        dVal[split] = double.Parse(arrBuf[split]);
+
+                    if (Math.Round(Math.Abs(dVal[0] - targetTemp), 1) <= margin)
+                    {
+                        AppendLog("INFO", "Done SetTemp! Temperature is stable. Final setling for 1 minuite.");
+                        await Task.Delay(60000, ct);
+                        break;
+                    }
+                    else
+                    {
+                        AppendLog("INFO", $"Temperature drifted (Real: {dVal[0]}). Resuming polling...");
+                        await Task.Delay(stableInterval, ct);
+                    }
+                }
+                else
+                {
+                    await Task.Delay(stableInterval, ct);
+                }
+
             }
         }
     }
