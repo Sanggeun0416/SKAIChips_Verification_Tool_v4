@@ -307,13 +307,52 @@ namespace SKAIChips_Verification_Tool.RegisterControl
             IReportSheet dldoSheet = ctx.Report.CreateSheet($"{time}_ChamberTest");
             dldoSheet.SetSheetFont("Consolas", 11);
 
-            //var vref_dldo_trim_3 = _regCont.RegMgr.GetRegisterItem(this, "vref_dldo_trim<3>");
-            //var vref_dldo_trim_2_0 = _regCont.RegMgr.GetRegisterItem(this, "vref_dldo_trim<2:0>");
+            var vref_dldo_trim_3 = _regCont.RegMgr.GetRegisterItem(this, "vref_dldo_trim<3>");
+            var vref_dldo_trim_2_0 = _regCont.RegMgr.GetRegisterItem(this, "vref_dldo_trim<2:0>");
 
-            //dldoSheet.Write(1, 1, $"vref_dldo_trim<3:0>");
-            //dldoSheet.Write(1, 2, $"dldo_out[mV]");
-            //dldoSheet.SetAlignmentCenter(1, 1, 1, 2);
-            //dldoSheet.AutoFit();
+            dldoSheet.Write(1, 1, $"vref_dldo_trim<3:0>");
+            dldoSheet.Write(1, 2, $"dldo_out[mV]");
+            dldoSheet.SetAlignmentCenter(1, 1, 1, 2);
+            dldoSheet.AutoFit();
+
+            double targetVoltage = 1200.0;
+            uint bestTrim = 0;
+            double minDifference = double.MaxValue;
+
+            for (uint trim = 0; trim < 16; trim++)
+            {
+                ct.ThrowIfCancellationRequested();
+
+                uint fine_3 = (trim >> 3) & 0x01;
+                uint fine_2_0 = trim & 0x07;
+
+                vref_dldo_trim_3.Write(fine_3);
+                vref_dldo_trim_2_0.Write(fine_2_0);
+                await Task.Delay(100, ct);
+
+                double voltage = Math.Round(double.Parse(Inst("DigitalMultimeter0").Query(":MEAS:VOLT:DC?")) * 1000, 5);
+
+                int rowOffset = 2 + (int)trim;
+                dldoSheet.Write(rowOffset, 1, $"{trim}");
+                dldoSheet.Write(rowOffset, 2, $"{voltage}");
+
+                double diff = Math.Abs(voltage - targetVoltage);
+                if (diff < minDifference)
+                {
+                    minDifference = diff;
+                    bestTrim = trim;
+                }
+            }
+
+            uint best_fine_3 = (bestTrim >> 3) & 0x01;
+            uint best_fine_2_0 = bestTrim & 0x07;
+
+            vref_dldo_trim_3.Write(best_fine_3);
+            vref_dldo_trim_2_0.Write(best_fine_2_0);
+            await Task.Delay(100, ct);
+
+            dldoSheet.Write(19, 1, "Best Trim:");
+            dldoSheet.Write(19, 2, $"{bestTrim}");
 
             double[] tempsToTest = [85, 25, -40];
             for (int cycle = 0; cycle < tempsToTest.Length; cycle++)
