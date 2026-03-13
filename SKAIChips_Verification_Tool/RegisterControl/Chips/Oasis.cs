@@ -276,7 +276,7 @@
                 throw new InvalidOperationException("RegisterControlForm is null.");
 
             CheckInstruments("DigitalMultimeter0", "PowerSupply0");
-            var ABGR_CONT = _regCont.RegMgr.GetRegisterItem(this, "O_ABGR_CONT[3:0]");
+            var ABGR_CONT = _regCont.RegMgr.GetRegisterItem(this, "O_ABGR_CONT");
 
             IReportSheet sortSheet;
             int x_pos = 2;
@@ -407,7 +407,7 @@
                 {
                     isPass = false;
                     ABGR_CONT.Read();
-                    Inst("DigitalMultimeter0").Write(":CONF:VOLT:DC 1");
+                    Inst("DigitalMultimeter0").Write(":CONF:VOLT:DC AUTO");
 
                     await ManualGpio4Abgr();
                     await Task.Delay(1000);
@@ -466,7 +466,7 @@
 
             CheckInstruments("DigitalMultimeter2");
 
-            var ABGR_CONT = _regCont.RegMgr.GetRegisterItem(this, "O_ABGR_CONT[3:0]");
+            var ABGR_CONT = _regCont.RegMgr.GetRegisterItem(this, "O_ABGR_CONT");
 
             uint[] bgr_cont = { 8, 9, 10, 11, 12, 13, 14, 15, 0, 1, 2, 3, 4, 5, 6, 7 };
             double dmm_volt_mv = 0, bgr_target_mv = 300;
@@ -523,7 +523,7 @@
 
             CheckInstruments("DigitalMultimeter1");
 
-            var MLDO_CONT = _regCont.RegMgr.GetRegisterItem(this, "O_MLDO_CONT[5:0]");
+            var MLDO_CONT = _regCont.RegMgr.GetRegisterItem(this, "O_MLDO_CONT");
 
             uint[] mldo_cont = {
                 8, 9, 10, 11, 12, 13, 14, 15, 0, 1, 2, 3, 4, 5, 6, 7,
@@ -581,7 +581,7 @@
 
             CheckInstruments("DigitalMultimeter0");
 
-            var ALDO_CONT = _regCont.RegMgr.GetRegisterItem(this, "O_ALDO_CONT[5:0]");
+            var ALDO_CONT = _regCont.RegMgr.GetRegisterItem(this, "O_ALDO_CONT");
 
             uint[] aldo_cont = {
                 24, 25, 26, 27, 28, 29, 30, 31,
@@ -642,7 +642,7 @@
 
             CheckInstruments("DigitalMultimeter2");
 
-            var FLDO_CONT = _regCont.RegMgr.GetRegisterItem(this, "O_FLDO_CONT[3:0]");
+            var FLDO_CONT = _regCont.RegMgr.GetRegisterItem(this, "O_FLDO_CONT");
 
             uint[] fldo_cont = { 8, 9, 10, 11, 12, 13, 14, 15, 0, 1, 2, 3, 4, 5, 6, 7 };
             double dmm_volt_mv = 0, fldo_target_mv = 1.800;
@@ -693,7 +693,7 @@
 
             CheckInstruments("DigitalMultimeter2");
 
-            var DALDO_CONT = _regCont.RegMgr.GetRegisterItem(this, "O_DA_LDO_CONT[5:0]");
+            var DALDO_CONT = _regCont.RegMgr.GetRegisterItem(this, "O_DA_LDO_CONT");
 
             uint[] daldo_cont = {
                 8, 9, 10, 11, 12, 13, 14, 15, 0, 1, 2, 3, 4, 5, 6, 7,
